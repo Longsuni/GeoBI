@@ -1,0 +1,112 @@
+2026-05-11 09:29:15 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "is_durable VARCHAR_IGNORECASE(1)": "CAST('FALSE' AS VARCHAR_IGNORECASE) (5)"; SQL statement:
+INSERT INTO QRTZ_JOB_DETAILS (SCHED_NAME, JOB_NAME, JOB_GROUP, DESCRIPTION, JOB_CLASS_NAME, IS_DURABLE, IS_NONCONCURRENT, IS_UPDATE_DATA, REQUESTS_RECOVERY, JOB_DATA)  VALUES('DatartScheduleCluster', ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-200]
+2026-05-11 13:25:33 database: flush
+org.h2.message.DbException: General error: "java.lang.IllegalStateException: The file is locked: nio:C:/Users/longs/Desktop/zhongchuliang/datart-master/datart-master/bin/h2/datart.demo.mv.db [1.4.200/7]" [50000-200]
+	at org.h2.message.DbException.get(DbException.java:194)
+	at org.h2.message.DbException.convert(DbException.java:347)
+	at org.h2.mvstore.db.MVTableEngine$1.uncaughtException(MVTableEngine.java:93)
+	at org.h2.mvstore.MVStore.handleException(MVStore.java:2877)
+	at org.h2.mvstore.MVStore.panic(MVStore.java:481)
+	at org.h2.mvstore.MVStore.<init>(MVStore.java:402)
+	at org.h2.mvstore.MVStore$Builder.open(MVStore.java:3579)
+	at org.h2.mvstore.db.MVTableEngine$Store.open(MVTableEngine.java:170)
+	at org.h2.mvstore.db.MVTableEngine.init(MVTableEngine.java:103)
+	at org.h2.engine.Database.getPageStore(Database.java:2659)
+	at org.h2.engine.Database.open(Database.java:675)
+	at org.h2.engine.Database.openDatabase(Database.java:307)
+	at org.h2.engine.Database.<init>(Database.java:301)
+	at org.h2.engine.Engine.openSession(Engine.java:74)
+	at org.h2.engine.Engine.openSession(Engine.java:192)
+	at org.h2.engine.Engine.createSessionAndValidate(Engine.java:171)
+	at org.h2.engine.Engine.createSession(Engine.java:166)
+	at org.h2.engine.Engine.createSession(Engine.java:29)
+	at org.h2.engine.SessionRemote.connectEmbeddedOrServer(SessionRemote.java:340)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:173)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:152)
+	at org.h2.Driver.connect(Driver.java:69)
+	at com.alibaba.druid.pool.DruidAbstractDataSource.createPhysicalConnection(DruidAbstractDataSource.java:1652)
+	at com.alibaba.druid.pool.DruidAbstractDataSource.createPhysicalConnection(DruidAbstractDataSource.java:1718)
+	at com.alibaba.druid.pool.DruidDataSource$CreateConnectionThread.run(DruidDataSource.java:2785)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientException: General error: "java.lang.IllegalStateException: The file is locked: nio:C:/Users/longs/Desktop/zhongchuliang/datart-master/datart-master/bin/h2/datart.demo.mv.db [1.4.200/7]" [50000-200]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:505)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:429)
+	... 25 more
+Caused by: java.lang.IllegalStateException: The file is locked: nio:C:/Users/longs/Desktop/zhongchuliang/datart-master/datart-master/bin/h2/datart.demo.mv.db [1.4.200/7]
+	at org.h2.mvstore.DataUtils.newIllegalStateException(DataUtils.java:950)
+	at org.h2.mvstore.FileStore.open(FileStore.java:166)
+	at org.h2.mvstore.MVStore.<init>(MVStore.java:381)
+	... 19 more
+Caused by: java.nio.channels.OverlappingFileLockException
+	at java.base/sun.nio.ch.FileLockTable.checkList(FileLockTable.java:229)
+	at java.base/sun.nio.ch.FileLockTable.add(FileLockTable.java:123)
+	at java.base/sun.nio.ch.FileChannelImpl.tryLock(FileChannelImpl.java:1154)
+	at org.h2.store.fs.FileNio.tryLock(FilePathNio.java:121)
+	at java.base/java.nio.channels.FileChannel.tryLock(FileChannel.java:1165)
+	at org.h2.mvstore.FileStore.open(FileStore.java:163)
+	... 20 more
+2026-05-11 13:25:34 database: flush
+org.h2.message.DbException: General error: "java.lang.IllegalStateException: The file is locked: nio:C:/Users/longs/Desktop/zhongchuliang/datart-master/datart-master/bin/h2/datart.demo.mv.db [1.4.200/7]" [50000-200]
+	at org.h2.message.DbException.get(DbException.java:194)
+	at org.h2.message.DbException.convert(DbException.java:347)
+	at org.h2.mvstore.db.MVTableEngine$1.uncaughtException(MVTableEngine.java:93)
+	at org.h2.mvstore.MVStore.handleException(MVStore.java:2877)
+	at org.h2.mvstore.MVStore.panic(MVStore.java:481)
+	at org.h2.mvstore.MVStore.<init>(MVStore.java:402)
+	at org.h2.mvstore.MVStore$Builder.open(MVStore.java:3579)
+	at org.h2.mvstore.db.MVTableEngine$Store.open(MVTableEngine.java:170)
+	at org.h2.mvstore.db.MVTableEngine.init(MVTableEngine.java:103)
+	at org.h2.engine.Database.getPageStore(Database.java:2659)
+	at org.h2.engine.Database.open(Database.java:675)
+	at org.h2.engine.Database.openDatabase(Database.java:307)
+	at org.h2.engine.Database.<init>(Database.java:301)
+	at org.h2.engine.Engine.openSession(Engine.java:74)
+	at org.h2.engine.Engine.openSession(Engine.java:192)
+	at org.h2.engine.Engine.createSessionAndValidate(Engine.java:171)
+	at org.h2.engine.Engine.createSession(Engine.java:166)
+	at org.h2.engine.Engine.createSession(Engine.java:29)
+	at org.h2.engine.SessionRemote.connectEmbeddedOrServer(SessionRemote.java:340)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:173)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:152)
+	at org.h2.Driver.connect(Driver.java:69)
+	at com.alibaba.druid.pool.DruidAbstractDataSource.createPhysicalConnection(DruidAbstractDataSource.java:1652)
+	at com.alibaba.druid.pool.DruidAbstractDataSource.createPhysicalConnection(DruidAbstractDataSource.java:1718)
+	at com.alibaba.druid.pool.DruidDataSource$CreateConnectionThread.run(DruidDataSource.java:2785)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientException: General error: "java.lang.IllegalStateException: The file is locked: nio:C:/Users/longs/Desktop/zhongchuliang/datart-master/datart-master/bin/h2/datart.demo.mv.db [1.4.200/7]" [50000-200]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:505)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:429)
+	... 25 more
+Caused by: java.lang.IllegalStateException: The file is locked: nio:C:/Users/longs/Desktop/zhongchuliang/datart-master/datart-master/bin/h2/datart.demo.mv.db [1.4.200/7]
+	at org.h2.mvstore.DataUtils.newIllegalStateException(DataUtils.java:950)
+	at org.h2.mvstore.FileStore.open(FileStore.java:166)
+	at org.h2.mvstore.MVStore.<init>(MVStore.java:381)
+	... 19 more
+Caused by: java.nio.channels.OverlappingFileLockException
+	at java.base/sun.nio.ch.FileLockTable.checkList(FileLockTable.java:229)
+	at java.base/sun.nio.ch.FileLockTable.add(FileLockTable.java:123)
+	at java.base/sun.nio.ch.FileChannelImpl.tryLock(FileChannelImpl.java:1154)
+	at org.h2.store.fs.FileNio.tryLock(FilePathNio.java:121)
+	at java.base/java.nio.channels.FileChannel.tryLock(FileChannel.java:1165)
+	at org.h2.mvstore.FileStore.open(FileStore.java:163)
+	... 20 more
+2026-05-11 20:41:07 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "create_by VARCHAR_IGNORECASE(32)": "CAST('SCHEDULER_702e7ec52dbf48848180e93673cf20c7' AS VARCHAR_IGNORECASE) (42)"; SQL statement:
+insert into share (id, org_id,  viz_type, viz_id,  authentication_mode, row_permission_by,  authentication_code, expiry_date,  create_by, create_time,  roles) values (?, ?,  ?, ?,  ?, ?,  ?, ?,  ?, ?,  ?) [22001-200]
+2026-05-12 08:04:57 jdbc[8]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "is_durable VARCHAR_IGNORECASE(1)": "CAST('FALSE' AS VARCHAR_IGNORECASE) (5)"; SQL statement:
+INSERT INTO QRTZ_JOB_DETAILS (SCHED_NAME, JOB_NAME, JOB_GROUP, DESCRIPTION, JOB_CLASS_NAME, IS_DURABLE, IS_NONCONCURRENT, IS_UPDATE_DATA, REQUESTS_RECOVERY, JOB_DATA)  VALUES('DatartScheduleCluster', ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-200]
+2026-05-12 08:10:48 jdbc[8]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "is_durable VARCHAR_IGNORECASE(1)": "CAST('FALSE' AS VARCHAR_IGNORECASE) (5)"; SQL statement:
+INSERT INTO QRTZ_JOB_DETAILS (SCHED_NAME, JOB_NAME, JOB_GROUP, DESCRIPTION, JOB_CLASS_NAME, IS_DURABLE, IS_NONCONCURRENT, IS_UPDATE_DATA, REQUESTS_RECOVERY, JOB_DATA)  VALUES('DatartScheduleCluster', ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-200]
+2026-05-12 08:11:35 jdbc[8]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "is_durable VARCHAR_IGNORECASE(1)": "CAST('FALSE' AS VARCHAR_IGNORECASE) (5)"; SQL statement:
+INSERT INTO QRTZ_JOB_DETAILS (SCHED_NAME, JOB_NAME, JOB_GROUP, DESCRIPTION, JOB_CLASS_NAME, IS_DURABLE, IS_NONCONCURRENT, IS_UPDATE_DATA, REQUESTS_RECOVERY, JOB_DATA)  VALUES('DatartScheduleCluster', ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-200]
+2026-05-12 09:06:49 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "is_durable VARCHAR_IGNORECASE(1)": "CAST('FALSE' AS VARCHAR_IGNORECASE) (5)"; SQL statement:
+INSERT INTO QRTZ_JOB_DETAILS (SCHED_NAME, JOB_NAME, JOB_GROUP, DESCRIPTION, JOB_CLASS_NAME, IS_DURABLE, IS_NONCONCURRENT, IS_UPDATE_DATA, REQUESTS_RECOVERY, JOB_DATA)  VALUES('DatartScheduleCluster', ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-200]
+2026-05-12 10:04:30 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "is_durable VARCHAR_IGNORECASE(1)": "CAST('FALSE' AS VARCHAR_IGNORECASE) (5)"; SQL statement:
+INSERT INTO QRTZ_JOB_DETAILS (SCHED_NAME, JOB_NAME, JOB_GROUP, DESCRIPTION, JOB_CLASS_NAME, IS_DURABLE, IS_NONCONCURRENT, IS_UPDATE_DATA, REQUESTS_RECOVERY, JOB_DATA)  VALUES('DatartScheduleCluster', ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-200]
+2026-05-12 11:12:35 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "is_durable VARCHAR_IGNORECASE(1)": "CAST('FALSE' AS VARCHAR_IGNORECASE) (5)"; SQL statement:
+INSERT INTO QRTZ_JOB_DETAILS (SCHED_NAME, JOB_NAME, JOB_GROUP, DESCRIPTION, JOB_CLASS_NAME, IS_DURABLE, IS_NONCONCURRENT, IS_UPDATE_DATA, REQUESTS_RECOVERY, JOB_DATA)  VALUES('DatartScheduleCluster', ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-200]
