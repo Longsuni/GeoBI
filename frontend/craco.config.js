@@ -12,6 +12,10 @@ const {
   POSTCSS_MODES,
 } = require('@craco/craco');
 
+/** 本地 npm start 时，把 /api/v1 等代理到该地址（须带尾部 /）。例：set DATART_DEV_BACKEND_TARGET=http://localhost:9090/ */
+const DATART_DEV_BACKEND_TARGET =
+  process.env.DATART_DEV_BACKEND_TARGET || 'http://localhost:9090/';
+
 const rewireEntries = [
   {
     name: 'shareChart',
@@ -214,11 +218,11 @@ module.exports = {
     proxy: {
       '/api/v1': {
         changeOrigin: true,
-        target: 'http://localhost:8080/',
+        target: DATART_DEV_BACKEND_TARGET,
       },
       '/resources': {
         changeOrigin: true,
-        target: 'http://localhost:8080/',
+        target: DATART_DEV_BACKEND_TARGET,
       },
     },
     historyApiFallback: {
