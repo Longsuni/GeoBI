@@ -20,6 +20,7 @@ import { Button, Form, Input, message } from 'antd';
 import useI18NPrefix from 'app/hooks/useI18NPrefix';
 import { FC, useCallback, useState } from 'react';
 import { useHistory } from 'react-router';
+import { POST_AUTH_ENTRY_PATH } from 'globalConstants';
 import {
   getConfirmPasswordValidator,
   getPasswordValidator,
@@ -48,7 +49,7 @@ export const ResetPasswordForm: FC<ResetPasswordFormProps> = ({ token }) => {
         .then(res => {
           if (res) {
             message.success(t('resetSuccess'));
-            history.replace('/login');
+            history.replace(POST_AUTH_ENTRY_PATH);
           }
         })
         .finally(() => {

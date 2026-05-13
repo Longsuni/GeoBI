@@ -21,6 +21,7 @@ import useI18NPrefix from 'app/hooks/useI18NPrefix';
 import React, { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components/macro';
+import { POST_AUTH_ENTRY_PATH } from 'globalConstants';
 import { LINE_HEIGHT_ICON_LG } from 'styles/StyleConstants';
 import { CheckCodeForm } from './CheckCodeForm';
 import { ResetPasswordForm } from './ResetPasswordForm';
@@ -41,7 +42,7 @@ export function ForgetPasswordForm() {
       ) : (
         <ResetPasswordForm token={token} />
       )}
-      <LinkButton to="/login">{t('return')}</LinkButton>
+      <LinkButton to={POST_AUTH_ENTRY_PATH}>{t('return')}</LinkButton>
     </AuthLayout.Form>
   );
 }

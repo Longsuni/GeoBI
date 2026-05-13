@@ -26,6 +26,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import { LINE_HEIGHT_ICON_LG } from 'styles/StyleConstants';
+import { POST_AUTH_ENTRY_PATH } from 'globalConstants';
 import { getPasswordValidator } from 'utils/validators';
 
 interface RegisterFormProps {
@@ -55,7 +56,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ onRegisterSuccess }) => {
   );
 
   const toLogin = useCallback(() => {
-    history.push('/login');
+    history.push(POST_AUTH_ENTRY_PATH);
   }, [history]);
 
   return (
@@ -119,7 +120,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ onRegisterSuccess }) => {
         </Form.Item>
         <Links>
           {t('desc1')}
-          <LinkButton onClick={toLogin}>{t('login')}</LinkButton>
+          <LinkButton onClick={toLogin}>{t('backToEntry')}</LinkButton>
         </Links>
       </Form>
     </AuthLayout.Form>

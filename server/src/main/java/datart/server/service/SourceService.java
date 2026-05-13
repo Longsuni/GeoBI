@@ -34,6 +34,12 @@ public interface SourceService extends BaseCRUDService<Source, SourceMapperExt>,
 
     boolean checkUnique(String orgId, String parentId, String name);
 
+    /**
+     * 同一组织、同一父级下若已有同名数据源则返回其一（优先 {@code status=ACTIVE}），否则 {@code null}。
+     * 用于 jump-login 自动建源等幂等场景，避免重复插入。
+     */
+    Source findExistingSourceForCreate(String orgId, String parentId, String name);
+
     List<Source> listSources(String orgId, boolean active);
 
     SchemaInfo getSourceSchemaInfo(String sourceId);

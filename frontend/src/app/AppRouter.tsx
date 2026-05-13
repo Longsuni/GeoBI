@@ -19,13 +19,13 @@
 import { ConfigProvider, message } from 'antd';
 import echartsDefaultTheme from 'app/assets/theme/echarts_default_theme.json';
 import { registerTheme } from 'echarts';
-import { PUBLIC_URL, StorageKeys } from 'globalConstants';
+import { HIDE_LOGIN_LOGOUT_UI, POST_AUTH_ENTRY_PATH, PUBLIC_URL, StorageKeys } from 'globalConstants';
 import { antdLocales } from 'locales/i18n';
 import { useEffect, useLayoutEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { GlobalStyles } from 'styles/globalStyles';
 import { getToken } from 'utils/auth';
 import useI18NPrefix from './hooks/useI18NPrefix';
@@ -33,6 +33,7 @@ import { LoginAuthRoute } from './LoginAuthRoute';
 import { LazyActivationPage } from './pages/ActivationPage/Loadable';
 import { LazyAuthorizationPage } from './pages/AuthorizationPage/Loadable';
 import { LazyForgetPasswordPage } from './pages/ForgetPasswordPage/Loadable';
+import { JumpOnlyEntryPage } from './pages/JumpOnlyEntryPage';
 import { LazyLoginPage } from './pages/LoginPage/Loadable';
 import { LazyRegisterPage } from './pages/RegisterPage/Loadable';
 import { LazySetupPage } from './pages/SetupPage/Loadable';
@@ -75,10 +76,47 @@ export function AppRouter() {
         </Helmet>
         <Switch>
           <Route path="/setup" component={LazySetupPage} />
-          <Route path="/login" component={LazyLoginPage} />
-          <Route path="/register" component={LazyRegisterPage} />
-          <Route path="/activation" component={LazyActivationPage} />
-          <Route path="/forgetPassword" component={LazyForgetPasswordPage} />
+          <Route
+            path="/login"
+            render={() =>
+              HIDE_LOGIN_LOGOUT_UI ? (
+                <Redirect to={POST_AUTH_ENTRY_PATH} />
+              ) : (
+                <LazyLoginPage />
+              )
+            }
+          />
+          <Route path="/entry" component={JumpOnlyEntryPage} />
+          <Route
+            path="/register"
+            render={() =>
+              HIDE_LOGIN_LOGOUT_UI ? (
+                <Redirect to={POST_AUTH_ENTRY_PATH} />
+              ) : (
+                <LazyRegisterPage />
+              )
+            }
+          />
+          <Route
+            path="/activation"
+            render={() =>
+              HIDE_LOGIN_LOGOUT_UI ? (
+                <Redirect to={POST_AUTH_ENTRY_PATH} />
+              ) : (
+                <LazyActivationPage />
+              )
+            }
+          />
+          <Route
+            path="/forgetPassword"
+            render={() =>
+              HIDE_LOGIN_LOGOUT_UI ? (
+                <Redirect to={POST_AUTH_ENTRY_PATH} />
+              ) : (
+                <LazyForgetPasswordPage />
+              )
+            }
+          />
           <Route path="/authorization" component={LazyAuthorizationPage} />
           <LoginAuthRoute />
         </Switch>

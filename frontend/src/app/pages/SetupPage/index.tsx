@@ -26,6 +26,7 @@ import { selectSetupLoading, selectSystemInfo } from 'app/slice/selectors';
 import React, { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
+import { POST_AUTH_ENTRY_PATH } from 'globalConstants';
 import { SUCCESS } from 'styles/StyleConstants';
 import { SetupForm } from './SetupForm';
 
@@ -36,7 +37,7 @@ export function SetupPage() {
   const t = useI18NPrefix('setup');
 
   const toLogin = useCallback(() => {
-    history.push('/login');
+    history.push(POST_AUTH_ENTRY_PATH);
   }, [history]);
 
   const initialized = !!systemInfo?.initialized;

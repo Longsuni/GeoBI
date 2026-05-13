@@ -33,11 +33,39 @@ import org.springframework.util.FileCopyUtils;
 import java.io.File;
 import java.net.URL;
 
-
 @Slf4j
 public class WebUtils {
 
     private static final Integer DEFAULT_TIMEOUT = 60;
+
+    private static final Object CHROME_LOCK = new Object();
+
+    private static volatile WebDriver sharedWebDriver;
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(WebUtils::shutdownSharedWebDriver, "datart-webdriver-shutdown"));
+    }
+
+    private static boolean isReuseWebDriver() {
+        return Boolean.parseBoolean(Application.getProperty("datart.screenshot.reuse-webdriver", "true"));
+    }
+
+    private static void shutdownSharedWebDriver() {
+        synchronized (CHROME_LOCK) {
+            quitSharedDriverLocked();
+        }
+    }
+
+    private static void quitSharedDriverLocked() {
+        if (sharedWebDriver != null) {
+            try {
+                sharedWebDriver.quit();
+            } catch (Exception e) {
+                log.warn("quit shared WebDriver: {}", e.getMessage());
+            }
+            sharedWebDriver = null;
+        }
+    }
 
     private static WebDriver createWebDriver() throws Exception {
 
@@ -59,43 +87,71 @@ public class WebUtils {
     }
 
     public static <T> T screenShot(String url, OutputType<T> outputType, int imageWidth) throws Exception {
-        WebDriver webDriver = createWebDriver();
-        T output = null;
-        try {
-            webDriver.get(url);
-
-            WebDriverWait wait = new WebDriverWait(webDriver, getTimeout());
-
-            ExpectedCondition<WebElement> ConditionOfSign = ExpectedConditions.presenceOfElementLocated(By.id("headlessBrowserRenderSign"));
-            ExpectedCondition<WebElement> ConditionOfWidth = ExpectedConditions.presenceOfElementLocated(By.id("width"));
-            ExpectedCondition<WebElement> ConditionOfHeight = ExpectedConditions.presenceOfElementLocated(By.id("height"));
-            wait.until(ExpectedConditions.and(ConditionOfSign, ConditionOfWidth, ConditionOfHeight));
-
-            Double contentWidth = Double.parseDouble(webDriver.findElement(By.id("width")).getAttribute("value"));
-
-            Double contentHeight = Double.parseDouble(webDriver.findElement(By.id("height")).getAttribute("value"));
-
-            if (imageWidth>0 && imageWidth != contentWidth) {
-                // scale the window
-                webDriver.manage().window().setSize(new Dimension(imageWidth, contentHeight.intValue()));
+        if (isReuseWebDriver()) {
+            synchronized (CHROME_LOCK) {
+                if (sharedWebDriver == null) {
+                    log.info("Creating shared headless Chrome WebDriver for screenshots");
+                    sharedWebDriver = createWebDriver();
+                }
+                try {
+                    return doScreenShot(sharedWebDriver, url, outputType, imageWidth);
+                } catch (Exception e) {
+                    log.warn("Screenshot failed, discarding shared WebDriver: {}", e.getMessage());
+                    quitSharedDriverLocked();
+                    Exceptions.e(e);
+                }
             }
-            Thread.sleep(1500);
-            // scale the window again
-            contentWidth = Double.parseDouble(webDriver.findElement(By.id("width")).getAttribute("value"));
-            contentWidth = contentWidth>0 ? contentWidth : 1920;
-            contentHeight = Double.parseDouble(webDriver.findElement(By.id("height")).getAttribute("value"));
-            contentHeight = contentHeight>0 ? contentHeight : 600;
-            webDriver.manage().window().setSize(new Dimension(contentWidth.intValue(), contentHeight.intValue()));
-            Thread.sleep(1000);
-
-            TakesScreenshot screenshot = (TakesScreenshot) webDriver;
-            output = screenshot.getScreenshotAs(outputType);
-        } catch (Exception e) {
-            Exceptions.e(e);
-        } finally {
-            webDriver.quit();
         }
-        return output;
+        WebDriver webDriver = createWebDriver();
+        try {
+            return doScreenShot(webDriver, url, outputType, imageWidth);
+        } finally {
+            try {
+                webDriver.quit();
+            } catch (Exception e) {
+                log.warn("quit WebDriver: {}", e.getMessage());
+            }
+        }
+    }
+
+    private static <T> T doScreenShot(WebDriver webDriver, String url, OutputType<T> outputType, int imageWidth)
+            throws Exception {
+        webDriver.get(url);
+
+        WebDriverWait wait = new WebDriverWait(webDriver, getTimeout().longValue());
+
+        ExpectedCondition<WebElement> conditionOfSign =
+                ExpectedConditions.presenceOfElementLocated(By.id("headlessBrowserRenderSign"));
+        ExpectedCondition<WebElement> conditionOfWidth =
+                ExpectedConditions.presenceOfElementLocated(By.id("width"));
+        ExpectedCondition<WebElement> conditionOfHeight =
+                ExpectedConditions.presenceOfElementLocated(By.id("height"));
+        wait.until(ExpectedConditions.and(conditionOfSign, conditionOfWidth, conditionOfHeight));
+
+        Double contentWidth = Double.parseDouble(webDriver.findElement(By.id("width")).getAttribute("value"));
+
+        Double contentHeight = Double.parseDouble(webDriver.findElement(By.id("height")).getAttribute("value"));
+
+        if (imageWidth > 0 && imageWidth != contentWidth) {
+            webDriver.manage().window().setSize(new Dimension(imageWidth, contentHeight.intValue()));
+        }
+        sleepStabilizeMs("datart.screenshot.stabilize-ms-after-layout", 400);
+        contentWidth = Double.parseDouble(webDriver.findElement(By.id("width")).getAttribute("value"));
+        contentWidth = contentWidth > 0 ? contentWidth : 1920;
+        contentHeight = Double.parseDouble(webDriver.findElement(By.id("height")).getAttribute("value"));
+        contentHeight = contentHeight > 0 ? contentHeight : 600;
+        webDriver.manage().window().setSize(new Dimension(contentWidth.intValue(), contentHeight.intValue()));
+        sleepStabilizeMs("datart.screenshot.stabilize-ms-before-capture", 300);
+
+        TakesScreenshot screenshot = (TakesScreenshot) webDriver;
+        return screenshot.getScreenshotAs(outputType);
+    }
+
+    private static void sleepStabilizeMs(String propertyKey, int defaultMs) throws InterruptedException {
+        int ms = Integer.parseInt(Application.getProperty(propertyKey, Integer.toString(defaultMs)));
+        if (ms > 0) {
+            Thread.sleep(ms);
+        }
     }
 
     public static File screenShot2File(String url, String path, int imageWidth) throws Exception {
@@ -122,7 +178,11 @@ public class WebUtils {
     private static WebDriver createChromeWebDriver(String driverPath) throws Exception {
 
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("headless");
+        String chromeBinary = Application.getProperty("datart.screenshot.chrome-binary-path");
+        if (StringUtils.isNotBlank(chromeBinary)) {
+            options.setBinary(chromeBinary.trim());
+        }
+        options.addArguments("headless=new");
         options.addArguments("no-sandbox");
         options.addArguments("disable-gpu");
         options.addArguments("disable-features=NetworkService");

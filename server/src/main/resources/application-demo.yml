@@ -30,6 +30,8 @@ datart:
     token:
       secret: "d@a$t%a^r&a*t" #加密密钥
       timeout-min: 30  # 登录会话有效时长，单位：分钟。
+  jump-login:
+    session-timeout-min: 43200   # 跳转登录约 30 天；0 表示跟上面 security 走
 
   env:
     file-path: ${user.dir}/files # 服务端文件保存位置
@@ -37,4 +39,8 @@ datart:
   screenshot:
     timeout-seconds: 60
     webdriver-type: CHROME
-    webdriver-path:
+    reuse-webdriver: true
+    stabilize-ms-after-layout: 400
+    stabilize-ms-before-capture: 300
+    # Windows 路径在 YAML 里请用 / 或写成 \\，双引号内单个 \ 会触发转义报错
+    webdriver-path: C:/Users/longs/Desktop/zhongchuliang/chromedriver-win64/chromedriver.exe

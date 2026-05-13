@@ -23,6 +23,7 @@ import useI18NPrefix from 'app/hooks/useI18NPrefix';
 import { FC, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components/macro';
+import { POST_AUTH_ENTRY_PATH } from 'globalConstants';
 import { SPACE_MD, SPACE_TIMES, SPACE_XS } from 'styles/StyleConstants';
 
 interface WithoutActivationProps {
@@ -36,7 +37,7 @@ export const WithoutActivation: FC<WithoutActivationProps> = ({
   const t = useI18NPrefix('register');
 
   const toLogin = useCallback(() => {
-    history.push('/login');
+    history.push(POST_AUTH_ENTRY_PATH);
   }, [history]);
 
   return (

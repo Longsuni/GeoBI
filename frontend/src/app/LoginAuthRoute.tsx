@@ -17,6 +17,7 @@
  */
 
 import { useSelector } from 'react-redux';
+import { POST_AUTH_ENTRY_PATH } from 'globalConstants';
 import { Redirect, Route } from 'react-router-dom';
 import { getToken } from 'utils/auth';
 import { LazyMainPage } from './pages/MainPage/Loadable';
@@ -31,7 +32,11 @@ export function LoginAuthRoute() {
   }
 
   if (systemInfo) {
-    return <Redirect to={systemInfo.initialized ? '/login' : '/setup'} />;
+    return (
+      <Redirect
+        to={systemInfo.initialized ? POST_AUTH_ENTRY_PATH : '/setup'}
+      />
+    );
   } else {
     // TODO: add system info load fail page
     return null;

@@ -51,29 +51,43 @@ export const DownloadListPopup: FC<DownloadListPopupProps> = ({
   }, [tasks]);
 
   useEffect(() => {
-    let id;
-    if (polling && typeof id !== 'number') {
-      onLoadTasks().then(({ isNeedStopPolling, data }) => {
-        setTasks(data);
-        if (!isNeedStopPolling) {
-          id = setInterval(() => {
-            onLoadTasks().then(({ isNeedStopPolling, data }) => {
-              setTasks(data);
-              if (isNeedStopPolling) {
-                clearInterval(id);
-                setPolling(false);
-              }
-            });
-          }, DOWNLOAD_POLLING_INTERVAL);
-        } else {
-          setPolling(false);
-        }
-      });
-    } else if (typeof id === 'number') {
-      typeof id === 'number' && clearInterval(id);
+    if (!polling) {
+      return undefined;
     }
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+    let cancelled = false;
+
+    onLoadTasks().then(({ isNeedStopPolling, data }) => {
+      if (cancelled) {
+        return;
+      }
+      setTasks(data);
+      if (isNeedStopPolling) {
+        setPolling(false);
+        return;
+      }
+      intervalId = setInterval(() => {
+        onLoadTasks().then(({ isNeedStopPolling: stop, data: d }) => {
+          if (cancelled) {
+            return;
+          }
+          setTasks(d);
+          if (stop) {
+            if (intervalId !== undefined) {
+              clearInterval(intervalId);
+              intervalId = undefined;
+            }
+            setPolling(false);
+          }
+        });
+      }, DOWNLOAD_POLLING_INTERVAL);
+    });
+
     return () => {
-      typeof id === 'number' && clearInterval(id);
+      cancelled = true;
+      if (intervalId !== undefined) {
+        clearInterval(intervalId);
+      }
     };
   }, [polling, setPolling, onLoadTasks]);
   useMount(() => {

@@ -108,6 +108,18 @@ public class SourceServiceImpl extends BaseService implements SourceService {
     }
 
     @Override
+    public Source findExistingSourceForCreate(String orgId, String parentId, String name) {
+        List<Source> list = sourceMapper.checkName(orgId, parentId, name);
+        if (CollectionUtils.isEmpty(list)) {
+            return null;
+        }
+        return list.stream()
+                .filter(s -> s.getStatus() != null && s.getStatus() == Const.DATA_STATUS_ACTIVE)
+                .findFirst()
+                .orElseGet(() -> list.get(0));
+    }
+
+    @Override
     public List<Source> listSources(String orgId, boolean active) throws PermissionDeniedException {
 
         List<Source> sources = sourceMapper.listByOrg(orgId, active);

@@ -24,6 +24,7 @@ import type {
   WidgetToolkit,
 } from 'app/pages/DashBoardPage/types/widgetTypes';
 import { getJsonConfigs } from 'app/pages/DashBoardPage/utils';
+import { POST_AUTH_ENTRY_PATH } from 'globalConstants';
 import {
   initBackgroundTpl,
   initBorderTpl,
@@ -44,7 +45,7 @@ const initIframeTpl = () => {
       {
         label: 'iframe.src',
         key: 'src',
-        value: '/login', //https://www.oschina.net/p/datart, http://www.retech.cc/product/datart
+        value: POST_AUTH_ENTRY_PATH,
         comType: 'input',
       },
     ],

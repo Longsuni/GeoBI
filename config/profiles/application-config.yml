@@ -100,6 +100,8 @@ datart:
     token:
       secret: "d@a$t%a^r&a*t" #加密密钥
       timeout-min: 30  # 登录会话有效时长，单位：分钟。
+  jump-login:
+    session-timeout-min: 43200   # 跳转登录约 30 天；0 表示跟上面 security 走
 
   env:
     file-path: ${user.dir}/files # 服务端文件保存位置
@@ -107,4 +109,12 @@ datart:
   screenshot:
     timeout-seconds: 60
     webdriver-type: CHROME
+    # 复用同一 Chrome 进程做截图，避免每次冷启动（默认 true；排查问题可设 false）
+    reuse-webdriver: true
+    # 布局后、截图前短暂等待（毫秒）；过小可能截到未稳定画面，过大拖慢导出
+    stabilize-ms-after-layout: 400
+    stabilize-ms-before-capture: 300
+    # chromedriver.exe；YAML 里 Windows 路径用 / 或 \\
     webdriver-path: ${datart.webdriver-path:}
+    # 可选：便携版 Chrome 时填写 chrome.exe 绝对路径（同样建议用 /）
+    # chrome-binary-path: C:/path/to/chrome-win64/chrome.exe

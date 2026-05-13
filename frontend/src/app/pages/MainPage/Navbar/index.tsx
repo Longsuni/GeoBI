@@ -42,9 +42,8 @@ import {
 } from 'app/pages/MainPage/slice/selectors';
 import { getOrganizations } from 'app/pages/MainPage/slice/thunks';
 import { selectLoggedInUser, selectSystemInfo } from 'app/slice/selectors';
-import { logout } from 'app/slice/thunks';
 import { downloadFile } from 'app/utils/fetch';
-import { BASE_RESOURCE_URL, HIDE_SOURCE_NAV_MODULE } from 'globalConstants';
+import { BASE_RESOURCE_URL, HIDE_LOGIN_LOGOUT_UI, HIDE_SOURCE_NAV_MODULE } from 'globalConstants';
 import { changeLang, getLang } from 'locales/i18n';
 import { cloneElement, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -226,15 +225,10 @@ export function Navbar() {
         case 'profile':
           setProfileVisible(true);
           break;
-        case 'logout':
-          dispatch(
-            logout(() => {
-              history.replace('/');
-            }),
-          );
-          break;
         case 'password':
-          setModifyPasswordVisible(true);
+          if (!HIDE_LOGIN_LOGOUT_UI) {
+            setModifyPasswordVisible(true);
+          }
           break;
         case 'zh':
         case 'en':
@@ -250,7 +244,7 @@ export function Navbar() {
           break;
       }
     },
-    [dispatch, history, i18n, handleChangeThemeFn],
+    [dispatch, i18n, handleChangeThemeFn],
   );
 
   const onSetPolling = useCallback(
@@ -362,18 +356,14 @@ export function Navbar() {
                 >
                   <p>{t('nav.account.profile.title')}</p>
                 </MenuListItem>
-                <MenuListItem
-                  key="password"
-                  prefix={<FormOutlined className="icon" />}
-                >
-                  <p>{t('nav.account.changePassword.title')}</p>
-                </MenuListItem>
-                <MenuListItem
-                  key="logout"
-                  prefix={<ExportOutlined className="icon" />}
-                >
-                  <p>{t('nav.account.logout.title')}</p>
-                </MenuListItem>
+                {!HIDE_LOGIN_LOGOUT_UI && (
+                  <MenuListItem
+                    key="password"
+                    prefix={<FormOutlined className="icon" />}
+                  >
+                    <p>{t('nav.account.changePassword.title')}</p>
+                  </MenuListItem>
+                )}
               </Menu>
             }
             trigger={['click']}
@@ -387,10 +377,12 @@ export function Navbar() {
           </Popup>
         </Toolbar>
         <Profile visible={profileVisible} onCancel={hideProfile} />
-        <ModifyPassword
-          visible={modifyPasswordVisible}
-          onCancel={hideModifyPassword}
-        />
+        {!HIDE_LOGIN_LOGOUT_UI && (
+          <ModifyPassword
+            visible={modifyPasswordVisible}
+            onCancel={hideModifyPassword}
+          />
+        )}
       </MainNav>
       {showSubNav && (
         <SubNav>

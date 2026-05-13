@@ -104,7 +104,8 @@
     "email": "邮箱",
     "password": "密码",
     "register": "注册",
-    "desc1": "已有账号？",
+    "desc1": "从业务系统进入？",
+    "backToEntry": "查看说明",
     "login": "点击登录",
     "tipTitle": "请查收电子邮件",
     "tipDesc1": "我们向 ",
@@ -117,11 +118,11 @@
     "registerSuccess": "注册成功",
     "tipDesc5": "点击这里",
     "tipDesc6": "，或",
-    "goLogin": "去登录",
+    "goLogin": "查看进入说明",
     "continue": "继续注册"
   },
   "forgotPassword": {
-    "return": "返回登录",
+    "return": "返回入口说明",
     "email": "邮箱",
     "enterEmail": "输入邮箱",
     "emailInvalid": "邮箱格式不正确",
@@ -150,6 +151,7 @@
       "settings": "设置",
       "download": {
         "title": "下载列表",
+        "loadFailed": "加载下载任务失败，已停止自动刷新",
         "status": {
           "created": "处理中",
           "downloaded": "已下载",

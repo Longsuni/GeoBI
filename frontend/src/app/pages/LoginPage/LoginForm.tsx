@@ -20,7 +20,7 @@ import { Button, Form, Input } from 'antd';
 import * as AuthLayout from 'app/components/styles/AuthLayout';
 import usePrefixI18N from 'app/hooks/useI18NPrefix';
 import { User } from 'app/slice/types';
-import { StorageKeys } from 'globalConstants';
+import { HIDE_LOGIN_LOGOUT_UI, StorageKeys } from 'globalConstants';
 import React, { useCallback, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import styled from 'styled-components/macro';
@@ -136,7 +136,7 @@ export function LoginForm({
               </Button>
             )}
           </Form.Item>
-          {!inShare && (
+          {!inShare && !HIDE_LOGIN_LOGOUT_UI && (
             <Links>
               <LinkButton to="/forgetPassword">
                 {t('forgotPassword')}

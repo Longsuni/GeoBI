@@ -16,19 +16,33 @@
  * limitations under the License.
  */
 
+import { message } from 'antd';
+import i18next from 'i18next';
 import { request2 } from 'utils/request';
 import { DownloadTask, DownloadTaskState } from '../slice/types';
 
 export const loadTasks = async () => {
-  const { data } = await request2<DownloadTask[]>({
-    url: `/download/tasks`,
-    method: 'GET',
-  });
-  const isNeedStopPolling = !(data || []).some(
-    v => v.status === DownloadTaskState.CREATED,
-  );
-  return {
-    isNeedStopPolling,
-    data: data || [],
-  };
+  try {
+    const { data } = await request2<DownloadTask[]>({
+      url: `/download/tasks`,
+      method: 'GET',
+    });
+    const tasks = (data || []).map(v => ({
+      ...v,
+      status: Number(v.status),
+    }));
+    const isNeedStopPolling = !tasks.some(
+      v => v.status === DownloadTaskState.CREATED,
+    );
+    return {
+      isNeedStopPolling,
+      data: tasks,
+    };
+  } catch {
+    message.error(i18next.t('main.nav.download.loadFailed'));
+    return {
+      isNeedStopPolling: true,
+      data: [] as DownloadTask[],
+    };
+  }
 };

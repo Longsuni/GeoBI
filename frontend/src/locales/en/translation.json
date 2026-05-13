@@ -104,7 +104,8 @@
     "email": "Email",
     "password": "Password",
     "register": "Register",
-    "desc1": "Already have an account? ",
+    "desc1": "Access via your business system? ",
+    "backToEntry": "View instructions",
     "login": "Log In",
     "tipTitle": "Check your email",
     "tipDesc1": "We have sent you email to ",
@@ -117,11 +118,11 @@
     "registerSuccess": "Success",
     "tipDesc5": "Click here to",
     "tipDesc6": ", or continue to",
-    "goLogin": "Log In",
+    "goLogin": "View entry instructions",
     "continue": "Register"
   },
   "forgotPassword": {
-    "return": "Return to log in",
+    "return": "Back to entry instructions",
     "email": "Email",
     "enterEmail": "Enter email",
     "emailInvalid": "Invalid email address",
@@ -150,6 +151,7 @@
       "settings": "Settings",
       "download": {
         "title": "Download List",
+        "loadFailed": "Failed to load download tasks. Auto-refresh stopped.",
         "status": {
           "created": "Processing",
           "downloaded": "Downloaded",

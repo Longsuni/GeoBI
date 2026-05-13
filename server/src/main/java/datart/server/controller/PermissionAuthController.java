@@ -124,8 +124,16 @@ public class PermissionAuthController extends BaseController {
             sourceCreateParam.setOrgId(orgId);
             sourceCreateParam.setConfig(cfg);
             try {
-                Source source = sourceService.createSource(sourceCreateParam);
-                data.put("source", source);
+                String parentId = StringUtils.trimToNull(sourceCreateParam.getParentId());
+                Source existing = sourceService.findExistingSourceForCreate(orgId, parentId, name);
+                if (existing != null) {
+                    log.debug("jump-login: same-name source exists under org, reuse without create, orgId={}, name={}, sourceId={}",
+                            orgId, name, existing.getId());
+                    data.put("source", existing);
+                } else {
+                    Source source = sourceService.createSource(sourceCreateParam);
+                    data.put("source", source);
+                }
             } catch (PermissionDeniedException e) {
                 log.warn("jump-login: auto create source permission denied, orgId={}", orgId, e);
                 data.put("sourceCreateSkipped", "当前用户在该组织下无创建数据源权限（非组织 Owner 时需在角色中授予数据源创建权限）");
