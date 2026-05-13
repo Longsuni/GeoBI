@@ -47,9 +47,16 @@ public class JwtUtils {
     public static final int VERIFY_CODE_TIMEOUT_MIN = 10 * 60 * 1000;
 
     public static JwtToken createJwtToken(User user) {
+        return createJwtToken(user, getSessionTimeout());
+    }
+
+    /**
+     * @param sessionTimeoutMillis JWT 存活毫秒数（来自 datart.security.token.timeout-min 或 jump-login 单独配置）
+     */
+    public static JwtToken createJwtToken(User user, long sessionTimeoutMillis) {
         JwtToken jwtToken = new JwtToken();
         jwtToken.setSubject(user.getUsername());
-        jwtToken.setExp(new Date(System.currentTimeMillis() + getSessionTimeout()));
+        jwtToken.setExp(new Date(System.currentTimeMillis() + sessionTimeoutMillis));
         jwtToken.setPwdHash(user.getPassword().hashCode());
         return jwtToken;
     }
@@ -139,6 +146,10 @@ public class JwtUtils {
                 .setSigningKey(Application.getTokenSecret().getBytes(StandardCharsets.UTF_8))
                 .parseClaimsJws(token.trim())
                 .getBody();
+    }
+
+    public static long getSessionTimeoutMillis() {
+        return getSessionTimeout();
     }
 
     private static long getSessionTimeout() {

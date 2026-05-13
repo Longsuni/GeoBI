@@ -126,7 +126,14 @@ public class ShiroSecurityManager implements DatartSecurityManager {
             log.error("Login error ({})", user.getUsername());
             Exceptions.msg("login.fail");
         }
-        return JwtUtils.toJwtString(JwtUtils.createJwtToken(user));
+        // 滑动刷新：若当前 JWT 到期时间晚于「按默认超时从当前时刻起算」的到期时间，则保留原到期时间（避免 jump-login 长签在首次业务请求后被缩短）
+        long defaultTtlMs = JwtUtils.getSessionTimeoutMillis();
+        Date slidingExp = new Date(System.currentTimeMillis() + defaultTtlMs);
+        Date oldExp = jwtToken.getExp();
+        Date finalExp =
+                oldExp != null && oldExp.after(slidingExp) ? oldExp : slidingExp;
+        long ttlMs = Math.max(0L, finalExp.getTime() - System.currentTimeMillis());
+        return JwtUtils.toJwtString(JwtUtils.createJwtToken(user, ttlMs));
     }
 
     @Override

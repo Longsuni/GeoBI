@@ -88,6 +88,8 @@ datart:
 
   # 跳转登录后自动创建数据源：需 enabled=true，且 name、config 非空（敏感信息建议用环境变量覆盖）
   jump-login:
+    # 跳转登录单独签发 JWT 的有效期（分钟）；0 表示与普通登录相同（datart.security.token.timeout-min）。例：10080≈7 天
+    session-timeout-min: 10080
     auto-create-source-enabled: true
     auto-create-source-name: test
     auto-create-source-type: JDBC

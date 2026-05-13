@@ -87,6 +87,10 @@ public class UserServiceImpl extends BaseService implements UserService {
 
     private final ExternalSysUserAuthService externalSysUserAuthService;
 
+    /** 跳转登录单独签发 JWT 的有效期（分钟）；≤0 时与普通登录一致，使用 datart.security.token.timeout-min */
+    @Value("${datart.jump-login.session-timeout-min:0}")
+    private int jumpLoginSessionTimeoutMin;
+
     @Value("${datart.user.active.send-mail:false}")
     private boolean sendEmail;
 
@@ -318,7 +322,12 @@ public class UserServiceImpl extends BaseService implements UserService {
             registerParam.setEmail(DigestUtils.md5Hex(username + LocalDate.now()) + "@datart.generate");
             register(registerParam, false);
         }
-        String token = login(new PasswordToken(username, Const.USER_DEFAULT_PSW, System.currentTimeMillis()));
+        login(new PasswordToken(username, Const.USER_DEFAULT_PSW, System.currentTimeMillis()));
+        User user = userMapper.selectByUsername(username);
+        long jwtTtlMs = jumpLoginSessionTimeoutMin > 0
+                ? jumpLoginSessionTimeoutMin * 60L * 1000L
+                : JwtUtils.getSessionTimeoutMillis();
+        String token = JwtUtils.toJwtString(JwtUtils.createJwtToken(user, jwtTtlMs));
         UserBaseInfo userBaseInfo = new UserBaseInfo(securityManager.getCurrentUser());
         return new JumpLoginResult(token, userBaseInfo, externalSysUser);
     }

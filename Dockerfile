@@ -6,6 +6,6 @@ COPY ./config/ /GeoBI/config/
 COPY ./lib/ /GeoBI/lib/
 COPY static /GeoBI/static
 ENV TZ=Asia/Shanghai
-EXPOSE 8080
+EXPOSE 9090
 WORKDIR /GeoBI
 ENTRYPOINT java -server -Xms2G -Xmx2G -Dspring.profiles.active=config -Dfile.encoding=UTF-8 -cp "lib/*" datart.DatartServerApplication

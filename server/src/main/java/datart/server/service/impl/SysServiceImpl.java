@@ -41,13 +41,21 @@ public class SysServiceImpl implements SysService {
     @Value("${datart.security.token.timeout-min:30}")
     private String tokenTimeout;
 
+    /** 与 jump-login 长会话对齐：非 0 时，系统信息里 token 有效期取与普通配置中的较大值，避免前端 Cookie 早于 JWT 过期 */
+    @Value("${datart.jump-login.session-timeout-min:0}")
+    private int jumpLoginSessionTimeoutMin;
+
     @Value("${datart.user.active.send-mail:false}")
     private boolean sendMail;
 
     @Override
     public SystemInfo getSysInfo() {
         SystemInfo systemInfo = new SystemInfo();
-        systemInfo.setTokenTimeout(tokenTimeout);
+        int baseMin = Integer.parseInt(tokenTimeout.trim());
+        int effectiveMin = jumpLoginSessionTimeoutMin > 0
+                ? Math.max(baseMin, jumpLoginSessionTimeoutMin)
+                : baseMin;
+        systemInfo.setTokenTimeout(String.valueOf(effectiveMin));
         systemInfo.setMailEnable(sendMail);
         systemInfo.setVersion(getVersion());
         systemInfo.setTenantManagementMode(Application.getCurrMode().name());

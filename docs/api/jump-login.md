@@ -71,6 +71,7 @@
 | 配置项 | 说明 |
 |--------|------|
 | `datart.permission.external-auth-source-id` | Datart 中已配置的 PostgreSQL 数据源 ID |
+| `datart.jump-login.session-timeout-min` | 可选。跳转登录签发的 JWT 有效期（**分钟**）。`0` 表示与普通登录相同（`datart.security.token.timeout-min`）。设为较大值（如 `43200`≈30 天）可减少「过一段时间要重新 jump」；同时 `/sys/info` 返回的 `tokenTimeout` 会与该值取 **max**，以便前端 Cookie 与 JWT 对齐。 |
 
 ## 备注
 
