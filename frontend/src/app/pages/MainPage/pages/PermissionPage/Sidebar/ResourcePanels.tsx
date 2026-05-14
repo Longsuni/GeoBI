@@ -21,7 +21,10 @@ import useI18NPrefix from 'app/hooks/useI18NPrefix';
 import classNames from 'classnames';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { HIDE_SOURCE_NAV_MODULE } from 'globalConstants';
+import {
+  HIDE_SCHEDULE_NAV_MODULE,
+  HIDE_SOURCE_NAV_MODULE,
+} from 'globalConstants';
 import styled from 'styled-components/macro';
 import { SPACE_MD, SPACE_XS } from 'styles/StyleConstants';
 import { ResourceTypes } from '../constants';
@@ -81,7 +84,8 @@ export const ResourcePanels = memo(
         },
       ].filter(
         ({ type }) =>
-          !(HIDE_SOURCE_NAV_MODULE && type === ResourceTypes.Source),
+          !(HIDE_SOURCE_NAV_MODULE && type === ResourceTypes.Source) &&
+          !(HIDE_SCHEDULE_NAV_MODULE && type === ResourceTypes.Schedule),
       ),
       [
         views,

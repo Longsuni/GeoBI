@@ -181,10 +181,16 @@ export class ChartDataRequestBuilder {
   private buildColumnName(col) {
     const row = findPathByNameInMeta(this.dataView.meta, col.colName);
     if (row) {
-      return row?.path || [];
-    } else {
+      const p = row.path;
+      if (Array.isArray(p) && p.length > 0) {
+        return p;
+      }
+      if (typeof row.name === 'string' && row.name) {
+        return [row.name];
+      }
       return [col.colName];
     }
+    return [col.colName];
   }
 
   private buildGroups() {

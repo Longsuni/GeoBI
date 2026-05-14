@@ -19,6 +19,16 @@ datart:
   migration:
     enable: false
 
+  # demo 环境：外部 PG 权限 + 跳转登录粮温同步（激活 profile=demo 时以下生效，勿把敏感信息提交仓库）
+  permission:
+    external-auth-source-id: 0073bd81a4fa433c8eada77a5a3514b2
+    execute-check-sql:
+    test-execute-org-check-enabled: false
+    test-execute-allowed-orgs-sql:
+    user-org-mapping-table: public.permissions
+    test-execute-org-id-min-digits: 15
+    grain-view-bootstrap-sql:
+
   server:
     address: http://127.0.0.1:9090
 
@@ -32,6 +42,14 @@ datart:
       timeout-min: 30  # 登录会话有效时长，单位：分钟。
   jump-login:
     session-timeout-min: 43200   # 跳转登录约 30 天；0 表示跟上面 security 走
+    # 粮温视图自动同步（需 orgId + 数据源；仅新用户见 auto-sync-grain-views-only-new-user）
+    auto-sync-grain-views-enabled: true
+    auto-sync-grain-views-only-new-user: false
+    auto-sync-grain-views-source-id:
+    auto-create-source-enabled: true
+    auto-create-source-name: test
+    auto-create-source-type: JDBC
+    auto-create-source-config: '{"dbType":"POSTGRESQL","url":"jdbc:postgresql://8.156.66.70:54321/test","user":"SYSTEM","password":"2026@GeoSoc","driverClass":"org.postgresql.Driver","serverAggregate":false,"enableSpecialSQL":false,"enableSyncSchemas":true,"syncInterval":"60","properties":{}}'
 
   env:
     file-path: ${user.dir}/files # 服务端文件保存位置

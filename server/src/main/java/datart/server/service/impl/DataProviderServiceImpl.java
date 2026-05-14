@@ -492,6 +492,20 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
     }
 
     /**
+     * view.model 中 {@code type} 可能与 {@link ValueType} 枚举不一致（如 JDBC 常用别名 STR），在此归一化后再解析。
+     */
+    private static ValueType parseModelValueType(String typeStr) {
+        if (StringUtils.isBlank(typeStr)) {
+            return ValueType.STRING;
+        }
+        String u = typeStr.trim().toUpperCase();
+        if ("STR".equals(u)) {
+            return ValueType.STRING;
+        }
+        return ValueType.valueOf(u);
+    }
+
+    /**
      * 从 view 中解析配置的schema
      *
      * @param model view.model
@@ -523,7 +537,7 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
                     } else {
                         names = new String[]{Optional.ofNullable(item.getString("name")).orElse(key)};
                     }
-                    Column column = Column.of(ValueType.valueOf(item.getString("type")), names);
+                    Column column = Column.of(parseModelValueType(item.getString("type")), names);
                     schema.put(column.columnKey(), column);
                 }
             } else if (jsonObject.containsKey("hierarchy")) {
@@ -535,17 +549,17 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
                         if (children != null && children.size() > 0) {
                             for (int i = 0; i < children.size(); i++) {
                                 JSONObject child = children.getJSONObject(i);
-                                schema.put(child.getString("name"), Column.of(ValueType.valueOf(child.getString("type")), child.getString("name").split("\\.")));
+                                schema.put(child.getString("name"), Column.of(parseModelValueType(child.getString("type")), child.getString("name").split("\\.")));
                             }
                         }
                     } else {
-                        schema.put(key, Column.of(ValueType.valueOf(item.getString("type")), key.split("\\.")));
+                        schema.put(key, Column.of(parseModelValueType(item.getString("type")), key.split("\\.")));
                     }
                 }
             } else {
                 // 兼容1.0.0-beta.1以前的版本
                 for (String key : jsonObject.keySet()) {
-                    ValueType type = ValueType.valueOf(jsonObject.getJSONObject(key).getString("type"));
+                    ValueType type = parseModelValueType(jsonObject.getJSONObject(key).getString("type"));
                     schema.put(key, Column.of(type, key));
                 }
             }

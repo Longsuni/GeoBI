@@ -29,7 +29,11 @@ import {
   useHistory,
   useRouteMatch,
 } from 'react-router';
-import { HIDE_SOURCE_NAV_MODULE } from 'globalConstants';
+import {
+  HIDE_MEMBER_PERMISSION_SETTINGS_NAV,
+  HIDE_SCHEDULE_NAV_MODULE,
+  HIDE_SOURCE_NAV_MODULE,
+} from 'globalConstants';
 import styled from 'styled-components/macro';
 import { NotFoundPage } from '../NotFoundPage';
 import { StoryEditor } from '../StoryBoardPage/Editor';
@@ -190,64 +194,112 @@ export function MainPage() {
           />
           <Route
             path="/organizations/:orgId/schedules"
-            render={() => (
-              <AccessRoute module={ResourceTypes.Schedule}>
-                <SchedulePage />
-              </AccessRoute>
-            )}
+            render={({ match }) =>
+              HIDE_SCHEDULE_NAV_MODULE ? (
+                <Redirect
+                  to={`/organizations/${match.params.orgId}/vizs`}
+                />
+              ) : (
+                <AccessRoute module={ResourceTypes.Schedule}>
+                  <SchedulePage />
+                </AccessRoute>
+              )
+            }
           />
           <Route
             path="/organizations/:orgId/members"
-            render={() => (
-              <AccessRoute module={ResourceTypes.User}>
-                <MemberPage />
-              </AccessRoute>
-            )}
+            render={({ match }) =>
+              HIDE_MEMBER_PERMISSION_SETTINGS_NAV ? (
+                <Redirect
+                  to={`/organizations/${match.params.orgId}/vizs`}
+                />
+              ) : (
+                <AccessRoute module={ResourceTypes.User}>
+                  <MemberPage />
+                </AccessRoute>
+              )
+            }
           />
           <Route
             path="/organizations/:orgId/roles"
-            render={() => (
-              <AccessRoute module={ResourceTypes.User}>
-                <MemberPage />
-              </AccessRoute>
-            )}
+            render={({ match }) =>
+              HIDE_MEMBER_PERMISSION_SETTINGS_NAV ? (
+                <Redirect
+                  to={`/organizations/${match.params.orgId}/vizs`}
+                />
+              ) : (
+                <AccessRoute module={ResourceTypes.User}>
+                  <MemberPage />
+                </AccessRoute>
+              )
+            }
           />
           <Route path="/organizations/:orgId/permissions" exact>
-            <Redirect
-              to={`/organizations/${organizationMatch?.params.orgId}/permissions/subject`}
-            />
+            {HIDE_MEMBER_PERMISSION_SETTINGS_NAV ? (
+              <Redirect
+                to={`/organizations/${organizationMatch?.params.orgId}/vizs`}
+              />
+            ) : (
+              <Redirect
+                to={`/organizations/${organizationMatch?.params.orgId}/permissions/subject`}
+              />
+            )}
           </Route>
           <Route
             path="/organizations/:orgId/permissions/:viewpoint"
-            render={() => (
-              <AccessRoute module={ResourceTypes.Manager}>
-                <PermissionPage />
-              </AccessRoute>
-            )}
+            render={({ match }) =>
+              HIDE_MEMBER_PERMISSION_SETTINGS_NAV ? (
+                <Redirect
+                  to={`/organizations/${match.params.orgId}/vizs`}
+                />
+              ) : (
+                <AccessRoute module={ResourceTypes.Manager}>
+                  <PermissionPage />
+                </AccessRoute>
+              )
+            }
           />
           <Route
             path="/organizations/:orgId/variables"
-            render={() => (
-              <AccessRoute module={ResourceTypes.Manager}>
-                <VariablePage />
-              </AccessRoute>
-            )}
+            render={({ match }) =>
+              HIDE_MEMBER_PERMISSION_SETTINGS_NAV ? (
+                <Redirect
+                  to={`/organizations/${match.params.orgId}/vizs`}
+                />
+              ) : (
+                <AccessRoute module={ResourceTypes.Manager}>
+                  <VariablePage />
+                </AccessRoute>
+              )
+            }
           />
           <Route
             path="/organizations/:orgId/orgSettings"
-            render={() => (
-              <AccessRoute module={ResourceTypes.Manager}>
-                <OrgSettingPage />
-              </AccessRoute>
-            )}
+            render={({ match }) =>
+              HIDE_MEMBER_PERMISSION_SETTINGS_NAV ? (
+                <Redirect
+                  to={`/organizations/${match.params.orgId}/vizs`}
+                />
+              ) : (
+                <AccessRoute module={ResourceTypes.Manager}>
+                  <OrgSettingPage />
+                </AccessRoute>
+              )
+            }
           />
           <Route
             path="/organizations/:orgId/resourceMigration"
-            render={() => (
-              <AccessRoute module={ResourceTypes.Manager}>
-                <ResourceMigrationPage />
-              </AccessRoute>
-            )}
+            render={({ match }) =>
+              HIDE_MEMBER_PERMISSION_SETTINGS_NAV ? (
+                <Redirect
+                  to={`/organizations/${match.params.orgId}/vizs`}
+                />
+              ) : (
+                <AccessRoute module={ResourceTypes.Manager}>
+                  <ResourceMigrationPage />
+                </AccessRoute>
+              )
+            }
           />
           <Route path="*" component={NotFoundPage} />
         </Switch>

@@ -1803,7 +1803,16 @@ export function getMinAndMaxNumber(
 }
 
 export function findPathByNameInMeta(meta, colName) {
-  return getAllColumnInMeta(meta)?.find(v => v.name === colName);
+  return getAllColumnInMeta(meta)?.find(v => {
+    const n = v?.name as string | string[] | undefined;
+    if (n === colName) {
+      return true;
+    }
+    if (Array.isArray(n) && n.length === 1 && n[0] === colName) {
+      return true;
+    }
+    return false;
+  });
 }
 
 export function mergeChartAndViewComputedField(

@@ -71,30 +71,25 @@ datart:
   migration:
     enable: true
 
-  # 外部业务库权限对齐：填写 Datart「数据源」里 PostgreSQL 的 sourceId
+  # 外部 PG / 跳转粮温：请在对应 Spring Profile 中配置（如 application-demo.yml 的 datart.permission、datart.jump-login）
   permission:
-    external-auth-source-id: 0073bd81a4fa433c8eada77a5a3514b2
-    # data-provider execute 前校验：非空时对 PG 执行该 SQL，至少返回一行才允许 execute；变量 $EXT_USERNAME$ = 当前 Datart 登录用户名
-    # 示例：SELECT 1 FROM public.your_permission WHERE username = $EXT_USERNAME$ LIMIT 1
+    external-auth-source-id:
     execute-check-sql:
-    # 测试执行 /execute/test：为 true 时按外部 PG 的 org 授权校验脚本中的组织 ID字面量；为 false 则不做该校验（与代码一致）
-    # 链路：sys_user.username → sys_user.user_id → permissions.user_id → permissions.org_ids（JSON 文本数组）
     test-execute-org-check-enabled: false
-    # ① 完整自定义 SQL（非空则优先）；② 否则用 user-org-mapping-table + 内置 JOIN 模板
     test-execute-allowed-orgs-sql:
     user-org-mapping-table: public.permissions
-    # 脚本中被识别为「组织 ID」的纯数字最少位数（用于减少误匹配日期等）
     test-execute-org-id-min-digits: 15
+    grain-view-bootstrap-sql:
 
-  # 跳转登录后自动创建数据源：需 enabled=true，且 name、config 非空（敏感信息建议用环境变量覆盖）
   jump-login:
-    # 跳转登录单独签发 JWT 的有效期（分钟）；0 表示与普通登录相同（datart.security.token.timeout-min）。例：10080≈7 天
-    session-timeout-min: 10080
-    auto-create-source-enabled: true
-    auto-create-source-name: test
+    session-timeout-min: 0
+    auto-sync-grain-views-enabled: false
+    auto-sync-grain-views-only-new-user: true
+    auto-sync-grain-views-source-id:
+    auto-create-source-enabled: false
+    auto-create-source-name:
     auto-create-source-type: JDBC
-    # 整段为一条 JSON 字符串（与前端数据源 config 一致）；单引号包裹，内部用双引号
-    auto-create-source-config: '{"dbType":"POSTGRESQL","url":"jdbc:postgresql://8.156.66.70:54321/test","user":"SYSTEM","password":"2026@GeoSoc","driverClass":"org.postgresql.Driver","serverAggregate":false,"enableSpecialSQL":false,"enableSyncSchemas":true,"syncInterval":"60","properties":{}}'
+    auto-create-source-config:
 
   server:
     path-prefix: /api/v1

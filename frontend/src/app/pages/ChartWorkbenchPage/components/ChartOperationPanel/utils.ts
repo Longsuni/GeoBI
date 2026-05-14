@@ -118,23 +118,29 @@ export const buildDateLevelFields = (args: {
     });
   });
 };
+
+/** SQL 视图等场景下 meta 可能只有 name、无 path；排序时不能假定 path 存在 */
+function sortNameKeyFromFieldMeta(f: ChartDataViewMeta): string {
+  if (f.path && f.path.length > 0) {
+    return f.path[f.path.length - 1] ?? '';
+  }
+  return f.name ?? '';
+}
+
 export const fieldsSortByType = (fields, sortType) => {
   return fields.sort((a, b) => {
     if (sortType === 'byNameSort') {
-      if (a.category === ChartDataViewFieldCategory.Field) {
-        const aPath = a.path;
-        const bPath = b.path;
-
-        const aFileName = aPath[aPath.length - 1];
-        const bFileName = bPath[bPath.length - 1];
-
-        return aFileName.localeCompare(bFileName);
-      } else {
-        return a.name.localeCompare(b.name);
-      }
-    } else {
-      return null;
+      const aKey =
+        a.category === ChartDataViewFieldCategory.Field
+          ? sortNameKeyFromFieldMeta(a)
+          : a.name ?? '';
+      const bKey =
+        b.category === ChartDataViewFieldCategory.Field
+          ? sortNameKeyFromFieldMeta(b)
+          : b.name ?? '';
+      return String(aKey).localeCompare(String(bKey));
     }
+    return 0;
   });
 };
 

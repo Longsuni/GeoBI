@@ -308,28 +308,49 @@ public class UserServiceImpl extends BaseService implements UserService {
 
     @Override
     @Transactional
-    public JumpLoginResult jumpRegisterAndLogin(String username) throws Exception {
-        if (StringUtils.isBlank(username)) {
-            Exceptions.tr(ParamException.class, "error.param.empty", "username");
+    public JumpLoginResult jumpRegisterAndLogin(String externalUserId) throws Exception {
+        if (StringUtils.isBlank(externalUserId)) {
+            Exceptions.tr(ParamException.class, "error.param.empty", "user-id");
         }
-        username = username.trim();
-        Map<String, Object> externalSysUser = externalSysUserAuthService.loadExternalSysUserByUsername(username);
-        if (userMapper.selectByUsername(username) == null) {
+        externalUserId = externalUserId.trim();
+        Map<String, Object> externalSysUser = externalSysUserAuthService.loadExternalSysUserByUserId(externalUserId);
+        if (externalSysUser == null) {
+            Exceptions.tr(ParamException.class, "base.not.exists", "external sys_user[user_id=" + externalUserId + "]");
+        }
+        String datartUsername = externalUserId;
+        String displayName = resolveExternalDisplayName(externalSysUser, datartUsername);
+        boolean newlyRegistered = userMapper.selectByUsername(datartUsername) == null;
+        if (newlyRegistered) {
             UserRegisterParam registerParam = new UserRegisterParam();
-            registerParam.setUsername(username);
+            registerParam.setUsername(datartUsername);
             registerParam.setPassword(Const.USER_DEFAULT_PSW);
-            registerParam.setName(username);
-            registerParam.setEmail(DigestUtils.md5Hex(username + LocalDate.now()) + "@datart.generate");
+            registerParam.setName(displayName);
+            registerParam.setEmail(DigestUtils.md5Hex(datartUsername + LocalDate.now()) + "@datart.generate");
             register(registerParam, false);
         }
-        login(new PasswordToken(username, Const.USER_DEFAULT_PSW, System.currentTimeMillis()));
-        User user = userMapper.selectByUsername(username);
+        login(new PasswordToken(datartUsername, Const.USER_DEFAULT_PSW, System.currentTimeMillis()));
+        User user = userMapper.selectByUsername(datartUsername);
         long jwtTtlMs = jumpLoginSessionTimeoutMin > 0
                 ? jumpLoginSessionTimeoutMin * 60L * 1000L
                 : JwtUtils.getSessionTimeoutMillis();
         String token = JwtUtils.toJwtString(JwtUtils.createJwtToken(user, jwtTtlMs));
         UserBaseInfo userBaseInfo = new UserBaseInfo(securityManager.getCurrentUser());
-        return new JumpLoginResult(token, userBaseInfo, externalSysUser);
+        return new JumpLoginResult(token, userBaseInfo, externalSysUser, newlyRegistered);
+    }
+
+    private static String resolveExternalDisplayName(Map<String, Object> externalSysUser, String fallback) {
+        if (externalSysUser == null) {
+            return fallback;
+        }
+        Object nick = externalSysUser.get("nick_name");
+        if (nick != null && StringUtils.isNotBlank(String.valueOf(nick))) {
+            return String.valueOf(nick).trim();
+        }
+        Object un = externalSysUser.get("username");
+        if (un != null && StringUtils.isNotBlank(String.valueOf(un))) {
+            return String.valueOf(un).trim();
+        }
+        return fallback;
     }
 
     private String ldapLogin(PasswordToken passwordToken) {

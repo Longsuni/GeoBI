@@ -26,12 +26,17 @@ import java.util.Map;
 public interface ExternalSysUserAuthService {
 
     /**
-     * 按当前登录用户的 Datart {@code username} 匹配外部 {@code sys_user.username}，返回首行；未匹配则返回 {@code null}。
+     * 按当前 Datart 登录名解析外部 {@code sys_user}：优先 {@code username}，再按 {@code user_id::text}（与跳转登录以 user_id 作为 Datart 用户名一致）。
      */
     Map<String, Object> loadExternalSysUserForCurrentLogin() throws Exception;
 
     /**
-     * 未登录场景：按给定 {@code username} 查询外部 {@code sys_user}（与 execute/test 同源 SQL），返回首行。
+     * 按外部 {@code sys_user.username} 查询首行（与 execute 校验变量 {@code $EXT_USERNAME$} 语义一致）。
      */
     Map<String, Object> loadExternalSysUserByUsername(String username) throws Exception;
+
+    /**
+     * 按外部 {@code sys_user.user_id} 查询首行（用于 jump-login 入参 {@code user-id}）。
+     */
+    Map<String, Object> loadExternalSysUserByUserId(String userId) throws Exception;
 }

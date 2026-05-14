@@ -392,11 +392,13 @@ export function transformMeta(model?: string) {
       return column.children.map(c => ({
         ...c,
         path: c.path,
+        type: normalizeColumnModelType(c?.type) ?? c?.type,
         category: ChartDataViewFieldCategory.Field,
       }));
     }
     return {
       ...column,
+      type: normalizeColumnModelType(column?.type) ?? column?.type,
       path: column.path || colKey,
       category: ChartDataViewFieldCategory.Field,
     };
@@ -417,16 +419,63 @@ export function transformHierarchyMeta(model?: string): ChartDataViewMeta[] {
   });
 }
 
+/** 部分后端/脚本写入的 model 使用 STR，与前端 {@link DataViewFieldType} 不一致，会导致图表字段列表为空 */
+function normalizeColumnModelType(
+  type: string | undefined,
+): DataViewFieldType | string | undefined {
+  if (type == null || type === '') {
+    return undefined;
+  }
+  const u = String(type).toUpperCase();
+  if (u === 'STR') {
+    return DataViewFieldType.STRING;
+  }
+  if ((Object.values(DataViewFieldType) as string[]).includes(u)) {
+    return u as DataViewFieldType;
+  }
+  return type;
+}
+
+/** model 里 columns.name 常为单元素数组，与图表 meta 的 string name 统一 */
+function normalizeModelFieldName(
+  name: string | string[] | undefined | null,
+  fallbackKey: string,
+): string {
+  if (typeof name === 'string' && name.length > 0) {
+    return name;
+  }
+  if (Array.isArray(name)) {
+    if (name.length === 1) {
+      return String(name[0]);
+    }
+    if (name.length > 0) {
+      return name.map(String).join('.');
+    }
+  }
+  return fallbackKey || '';
+}
+
 function getMeta(key, column) {
   let children;
   let isHierarchy = false;
-  if (!isEmptyArray(column?.children)) {
+  const resolvedName = normalizeModelFieldName(column?.name, key);
+  const col = column
+    ? { ...column, name: resolvedName }
+    : { name: resolvedName };
+  if (!isEmptyArray(col?.children)) {
     isHierarchy = true;
-    children = column?.children.map(child => getMeta(child?.name, child));
+    children = col.children.map(child =>
+      getMeta(normalizeModelFieldName(child?.name, resolvedName), {
+        ...child,
+        name: normalizeModelFieldName(child?.name, resolvedName),
+      }),
+    );
   }
+  const colType = normalizeColumnModelType(col?.type) ?? col?.type;
   return {
-    ...column,
-    subType: column?.category,
+    ...col,
+    type: colType,
+    subType: col?.category,
     category: isHierarchy
       ? ChartDataViewFieldCategory.Hierarchy
       : ChartDataViewFieldCategory.Field,

@@ -6,6 +6,7 @@
 
 package datart.server.base.params;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -13,6 +14,8 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class JumpLoginParam {
 
-    @NotBlank(message = "Username can not be empty")
-    private String username;
+    /** 外部库 {@code public.sys_user.user_id}（JSON 字段名 {@code user-id}） */
+    @NotBlank(message = "User id can not be empty")
+    @JsonProperty("user-id")
+    private String userId;
 }

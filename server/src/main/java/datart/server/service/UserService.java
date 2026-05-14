@@ -73,7 +73,7 @@ public interface UserService extends BaseCRUDService<User, UserMapperExt> {
     boolean setupUser(UserRegisterParam user) throws MessagingException, UnsupportedEncodingException;
 
     /**
-     * 外部跳转：仅 username；先按 PG 查询 sys_user（得到 user_id 等），若 Datart 无用户则 {@link #register}（默认密码 123456），再登录，返回 JWT 与外部行。
+     * 外部跳转：入参为外部 {@code sys_user.user_id}；先按 PG 查行，Datart 用户名为 {@code user_id} 文本以便与权限变量对齐；若 Datart 无该用户则 {@link #register}（默认密码 123456），再登录，返回 JWT 与外部行。
      */
-    JumpLoginResult jumpRegisterAndLogin(String username) throws Exception;
+    JumpLoginResult jumpRegisterAndLogin(String externalUserId) throws Exception;
 }

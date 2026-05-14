@@ -46,6 +46,18 @@ export const DEFAULT_AUTHORIZATION_TOKEN_EXPIRATION = 1000 * 60 * 60;
 /** 为 true：隐藏主导航「数据源」、/sources 路由重定向到可视化、权限页中数据源面板（视图内选择数据源不受影响） */
 export const HIDE_SOURCE_NAV_MODULE = true;
 
+/** 为 true：隐藏主导航「定时任务」、/schedules 路由重定向到可视化、权限页中定时任务面板 */
+export const HIDE_SCHEDULE_NAV_MODULE = true;
+
+/**
+ * 为 true：隐藏主导航「成员与角色」「权限」「设置」（含变量/组织设置/资源迁移子栏），
+ * 并将 /members、/roles、/permissions、/variables、/orgSettings、/resourceMigration 重定向到可视化。
+ */
+export const HIDE_MEMBER_PERMISSION_SETTINGS_NAV = true;
+
+/** 为 true：隐藏侧栏底部「组织列表」入口（平台租户模式下银行图标与切换/新建组织弹层） */
+export const HIDE_ORGANIZATION_LIST_NAV = true;
+
 /** 为 true：不提供账号密码登录页；注册/忘记密码入口关闭；侧栏用户菜单不展示「修改密码」（仅跳转 /authorization 等鉴权） */
 export const HIDE_LOGIN_LOGOUT_UI = true;
 

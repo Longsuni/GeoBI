@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,7 +55,8 @@ public class PgExecutePermissionServiceImpl extends BaseService implements PgExe
     private boolean testExecuteOrgCheckEnabled;
 
     /**
-     * 返回当前用户可访问的 org 列表：需包含列 {@code org_ids}（JSON 文本数组）或 {@code org_id}（可多行），变量 {@code $EXT_USERNAME$}。
+     * 返回当前用户可访问的 org 列表：需包含列 {@code org_ids}（JSON 文本数组）或 {@code org_id}（可多行）；
+     * 脚本变量 {@code $EXT_USERNAME$}、{@code $EXT_USER_ID$} 均由服务端写入（与 Datart 登录名一致；跳转登录以 user_id 为登录名时靠 {@code user_id::text} 分支匹配）。
      */
     @Value("${datart.permission.test-execute-allowed-orgs-sql:}")
     private String testExecuteAllowedOrgsSql;
@@ -100,7 +101,16 @@ public class PgExecutePermissionServiceImpl extends BaseService implements PgExe
                 ValueType.STRING,
                 Sets.newHashSet(user.getUsername()),
                 false);
-        param.setVariables(Collections.singletonList(extUsername));
+        ScriptVariable extUserId = new ScriptVariable(
+                "EXT_USER_ID",
+                VariableTypeEnum.QUERY,
+                ValueType.STRING,
+                Sets.newHashSet(user.getUsername()),
+                false);
+        List<ScriptVariable> vars = new ArrayList<>(2);
+        vars.add(extUsername);
+        vars.add(extUserId);
+        param.setVariables(vars);
         Dataframe df = dataProviderService.testExecuteWithoutSourcePermission(param);
         if (df == null || CollectionUtils.isEmpty(df.getRows())) {
             Exceptions.tr(PermissionDeniedException.class, "message.security.permission-denied",
@@ -144,7 +154,7 @@ public class PgExecutePermissionServiceImpl extends BaseService implements PgExe
                     + minDigits + " 位连续数字），变量占位无法解析将一律拒绝";
         }
         if (allowed.isEmpty()) {
-            return "未查询到当前用户允许的组织范围（请确认 sys_user / permissions 中存在对应 username、user_id 且 org_ids 非空）";
+            return "未查询到当前用户允许的组织范围（请确认 sys_user / 映射表中存在对应 username 或 user_id，且 org_ids 非空）";
         }
         for (String ref : referenced) {
             if (!allowed.contains(ref)) {
@@ -173,7 +183,7 @@ public class PgExecutePermissionServiceImpl extends BaseService implements PgExe
                 + "FROM public.sys_user su "
                 + "INNER JOIN " + t + " uo ON uo.user_id = su.user_id "
                 + "WHERE (su.deleted IS NULL OR su.deleted = '0') "
-                + "AND su.username = $EXT_USERNAME$ "
+                + "AND (su.username = $EXT_USERNAME$ OR su.user_id::text = $EXT_USER_ID$) "
                 + "LIMIT 1";
         return new ResolvedAllowedSql(sql, null);
     }
@@ -197,7 +207,7 @@ public class PgExecutePermissionServiceImpl extends BaseService implements PgExe
         }
     }
 
-    private Set<String> loadAllowedOrgIds(String username, String sql) throws Exception {
+    private Set<String> loadAllowedOrgIds(String datartUsername, String sql) throws Exception {
         TestExecuteParam param = new TestExecuteParam();
         param.setSourceId(externalAuthSourceId);
         param.setScript(sql.trim());
@@ -207,9 +217,18 @@ public class PgExecutePermissionServiceImpl extends BaseService implements PgExe
                 "EXT_USERNAME",
                 VariableTypeEnum.QUERY,
                 ValueType.STRING,
-                Sets.newHashSet(username),
+                Sets.newHashSet(datartUsername),
                 false);
-        param.setVariables(Collections.singletonList(extUsername));
+        ScriptVariable extUserId = new ScriptVariable(
+                "EXT_USER_ID",
+                VariableTypeEnum.QUERY,
+                ValueType.STRING,
+                Sets.newHashSet(datartUsername),
+                false);
+        List<ScriptVariable> vars = new ArrayList<>(2);
+        vars.add(extUsername);
+        vars.add(extUserId);
+        param.setVariables(vars);
         Dataframe df = dataProviderService.testExecuteWithoutSourcePermission(param);
         return parseAllowedOrgIdsFromDataframe(df);
     }

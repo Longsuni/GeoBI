@@ -43,7 +43,14 @@ import {
 import { getOrganizations } from 'app/pages/MainPage/slice/thunks';
 import { selectLoggedInUser, selectSystemInfo } from 'app/slice/selectors';
 import { downloadFile } from 'app/utils/fetch';
-import { BASE_RESOURCE_URL, HIDE_LOGIN_LOGOUT_UI, HIDE_SOURCE_NAV_MODULE } from 'globalConstants';
+import {
+  BASE_RESOURCE_URL,
+  HIDE_LOGIN_LOGOUT_UI,
+  HIDE_MEMBER_PERMISSION_SETTINGS_NAV,
+  HIDE_ORGANIZATION_LIST_NAV,
+  HIDE_SCHEDULE_NAV_MODULE,
+  HIDE_SOURCE_NAV_MODULE,
+} from 'globalConstants';
 import { changeLang, getLang } from 'locales/i18n';
 import { cloneElement, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -199,7 +206,17 @@ export function Navbar() {
           },
           module: ResourceTypes.Manager,
         },
-      ].filter(item => !(HIDE_SOURCE_NAV_MODULE && item.name === 'sources')),
+      ].filter(
+        item =>
+          !(HIDE_SOURCE_NAV_MODULE && item.name === 'sources') &&
+          !(HIDE_SCHEDULE_NAV_MODULE && item.name === 'schedules') &&
+          !(
+            HIDE_MEMBER_PERMISSION_SETTINGS_NAV &&
+            (item.name === 'members' ||
+              item.name === 'permissions' ||
+              item.name === 'toSub')
+          ),
+      ),
     [subNavs, t],
   );
 
@@ -298,7 +315,8 @@ export function Navbar() {
             }}
           />
           {systemInfo?.tenantManagementMode ===
-            TenantManagementMode.Platform && (
+            TenantManagementMode.Platform &&
+            !HIDE_ORGANIZATION_LIST_NAV && (
             <Popup
               content={<OrganizationList />}
               trigger={['click']}

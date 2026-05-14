@@ -18,7 +18,10 @@
 
 import { Card } from 'antd';
 import useI18NPrefix from 'app/hooks/useI18NPrefix';
-import { HIDE_SOURCE_NAV_MODULE } from 'globalConstants';
+import {
+  HIDE_SCHEDULE_NAV_MODULE,
+  HIDE_SOURCE_NAV_MODULE,
+} from 'globalConstants';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ResourceTypes, SubjectTypes, Viewpoints } from '../constants';
@@ -122,7 +125,8 @@ export const ResourcesPermissionSetting = memo(
         },
       ].filter(
         ({ type }) =>
-          !(HIDE_SOURCE_NAV_MODULE && type === ResourceTypes.Source),
+          !(HIDE_SOURCE_NAV_MODULE && type === ResourceTypes.Source) &&
+          !(HIDE_SCHEDULE_NAV_MODULE && type === ResourceTypes.Schedule),
       ),
       [
         views,

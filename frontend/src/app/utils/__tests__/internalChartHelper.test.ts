@@ -1586,6 +1586,28 @@ describe('Internal Chart Helper ', () => {
       ]);
     });
 
+    test('should normalize columns.name array to string meta (bootstrap / JDBC model)', () => {
+      const model = {
+        hierarchy: {},
+        columns: {
+          grain_avg_temper: {
+            name: ['grain_avg_temper'],
+            type: 'NUMERIC',
+            category: 'UNCATEGORIZED',
+          },
+        },
+      };
+      const metas = transformHierarchyMeta(JSON.stringify(model));
+      expect(metas).toEqual([
+        {
+          name: 'grain_avg_temper',
+          type: 'NUMERIC',
+          category: 'field',
+          subType: 'UNCATEGORIZED',
+        },
+      ]);
+    });
+
     test('should get hierarchy metas', () => {
       const model = {
         hierarchy: {

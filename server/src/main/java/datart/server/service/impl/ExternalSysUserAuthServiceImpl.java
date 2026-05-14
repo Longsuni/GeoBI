@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,13 +48,20 @@ import java.util.Map;
 public class ExternalSysUserAuthServiceImpl extends BaseService implements ExternalSysUserAuthService {
 
     /**
-     * 使用 QUERY 变量 {@code $EXT_USERNAME$}，由服务端写入当前登录用户的 username，经脚本引擎按类型转义，禁止手写拼接 SQL。
+     * 使用 QUERY 变量 {@code $EXT_USERNAME$}、{@code $EXT_USER_ID$}（跳转登录后 Datart 用户名可与外部 {@code username} 不同，故用 OR 匹配）。
      */
-    private static final String SYS_USER_SELECT = ""
+    private static final String SYS_USER_SELECT_LOOSE = ""
             + "SELECT user_id, username, nick_name, user_type, email, phone_number, sex, avatar, "
             + "status, deleted, create_by, create_time, update_by, update_time, remark, super_admin "
             + "FROM public.sys_user "
-            + "WHERE (deleted IS NULL OR deleted = '0') AND username = $EXT_USERNAME$";
+            + "WHERE (deleted IS NULL OR deleted = '0') "
+            + "AND (username = $EXT_USERNAME$ OR user_id::text = $EXT_USER_ID$)";
+
+    private static final String SYS_USER_SELECT_BY_USER_ID = ""
+            + "SELECT user_id, username, nick_name, user_type, email, phone_number, sex, avatar, "
+            + "status, deleted, create_by, create_time, update_by, update_time, remark, super_admin "
+            + "FROM public.sys_user "
+            + "WHERE (deleted IS NULL OR deleted = '0') AND user_id::text = $EXT_USER_ID$";
 
     @Value("${datart.permission.external-auth-source-id:}")
     private String externalAuthSourceId;
@@ -76,7 +84,7 @@ public class ExternalSysUserAuthServiceImpl extends BaseService implements Exter
         if (StringUtils.isBlank(user.getUsername())) {
             Exceptions.tr(ParamException.class, "error.param.empty", "username");
         }
-        return querySysUserByUsername(user.getUsername());
+        return querySysUserLoose(user.getUsername());
     }
 
     @Override
@@ -84,25 +92,56 @@ public class ExternalSysUserAuthServiceImpl extends BaseService implements Exter
         if (StringUtils.isBlank(username)) {
             Exceptions.tr(ParamException.class, "error.param.empty", "username");
         }
-        return querySysUserByUsername(username.trim());
+        return querySysUserLoose(username.trim());
     }
 
-    private Map<String, Object> querySysUserByUsername(String username) throws Exception {
+    @Override
+    public Map<String, Object> loadExternalSysUserByUserId(String userId) throws Exception {
+        if (StringUtils.isBlank(userId)) {
+            Exceptions.tr(ParamException.class, "error.param.empty", "user-id");
+        }
         if (StringUtils.isBlank(externalAuthSourceId)) {
             Exceptions.tr(ParamException.class, "error.param.empty", "datart.permission.external-auth-source-id");
         }
         TestExecuteParam param = new TestExecuteParam();
         param.setSourceId(externalAuthSourceId);
-        param.setScript(SYS_USER_SELECT);
+        param.setScript(SYS_USER_SELECT_BY_USER_ID);
         param.setScriptType(ScriptType.SQL);
         param.setSize(5);
-        ScriptVariable extUsername = new ScriptVariable(
+        ScriptVariable extUserId = new ScriptVariable(
+                "EXT_USER_ID",
+                VariableTypeEnum.QUERY,
+                ValueType.STRING,
+                Sets.newHashSet(userId.trim()),
+                false);
+        param.setVariables(Collections.singletonList(extUserId));
+        Dataframe df = dataProviderService.testExecuteWithoutSourcePermission(param);
+        return firstRowAsMap(df);
+    }
+
+    private Map<String, Object> querySysUserLoose(String identityKey) throws Exception {
+        if (StringUtils.isBlank(externalAuthSourceId)) {
+            Exceptions.tr(ParamException.class, "error.param.empty", "datart.permission.external-auth-source-id");
+        }
+        TestExecuteParam param = new TestExecuteParam();
+        param.setSourceId(externalAuthSourceId);
+        param.setScript(SYS_USER_SELECT_LOOSE);
+        param.setScriptType(ScriptType.SQL);
+        param.setSize(5);
+        List<ScriptVariable> vars = new ArrayList<>(2);
+        vars.add(new ScriptVariable(
                 "EXT_USERNAME",
                 VariableTypeEnum.QUERY,
                 ValueType.STRING,
-                Sets.newHashSet(username),
-                false);
-        param.setVariables(Collections.singletonList(extUsername));
+                Sets.newHashSet(identityKey),
+                false));
+        vars.add(new ScriptVariable(
+                "EXT_USER_ID",
+                VariableTypeEnum.QUERY,
+                ValueType.STRING,
+                Sets.newHashSet(identityKey),
+                false));
+        param.setVariables(vars);
         Dataframe df = dataProviderService.testExecuteWithoutSourcePermission(param);
         return firstRowAsMap(df);
     }
