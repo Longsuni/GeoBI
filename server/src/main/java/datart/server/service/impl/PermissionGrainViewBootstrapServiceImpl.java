@@ -30,6 +30,7 @@ import datart.server.service.BaseService;
 import datart.server.service.DataProviderService;
 import datart.server.service.PermissionGrainViewBootstrapService;
 import datart.server.service.ViewService;
+import datart.server.util.GrainTemperatureDataframeExpander;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -522,7 +523,7 @@ public class PermissionGrainViewBootstrapServiceImpl extends BaseService impleme
     private static String buildGrainTemperatureScript(String externalOrgId, String regionCode) {
         String o = escapeSqlLiteral(externalOrgId);
         String r = escapeSqlLiteral(regionCode);
-        return "WITH RECURSIVE tree AS (\n"
+        return "WITH " + GrainTemperatureDataframeExpander.SCRIPT_MARKER + " RECURSIVE tree AS (\n"
                 + "    SELECT ou.id\n"
                 + "    FROM org_unit ou\n"
                 + "    WHERE ou.id = '" + o + "'\n"
@@ -553,7 +554,8 @@ public class PermissionGrainViewBootstrapServiceImpl extends BaseService impleme
                 + "    t.inner_temper                                AS position_inner_temper,\n"
                 + "    t.inner_humidity                              AS position_inner_humidity,\n"
                 + "    t.outer_temper                                AS position_outer_temper,\n"
-                + "    t.outer_humidity                              AS position_outer_humidity\n"
+                + "    t.outer_humidity                              AS position_outer_humidity,\n"
+                + "    t.algorithm_analysis_conclusion\n"
                 + "FROM temperature_data_table t\n"
                 + "JOIN hwdm_list h ON t.hwdm = h.hwdm\n"
                 + "WHERE t.deleted = '0'\n"

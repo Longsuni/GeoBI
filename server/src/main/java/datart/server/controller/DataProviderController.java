@@ -20,10 +20,14 @@ package datart.server.controller;
 
 
 import datart.core.data.provider.*;
+import datart.core.entity.View;
 import datart.server.base.dto.ResponseData;
 import datart.server.base.params.ViewExecuteParam;
 import datart.server.base.params.TestExecuteParam;
 import datart.server.service.DataProviderService;
+import datart.server.service.ViewService;
+import datart.server.util.GrainTemperatureDataframeExpander;
+import org.apache.commons.lang3.StringUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +44,11 @@ public class DataProviderController extends BaseController {
 
     private final DataProviderService dataProviderService;
 
-    public DataProviderController(DataProviderService dataProviderService) {
+    private final ViewService viewService;
+
+    public DataProviderController(DataProviderService dataProviderService, ViewService viewService) {
         this.dataProviderService = dataProviderService;
+        this.viewService = viewService;
     }
 
     @ApiOperation(value = "get supported data providers")
@@ -92,13 +99,32 @@ public class DataProviderController extends BaseController {
     @ApiOperation(value = "Execute Script")
     @PostMapping(value = "/execute/test")
     public ResponseData<Dataframe> testExecute(@RequestBody TestExecuteParam executeParam) throws Exception {
-        return ResponseData.success(dataProviderService.testExecute(executeParam));
+        Dataframe dataframe = dataProviderService.testExecute(executeParam);
+        GrainTemperatureDataframeExpander.expandIfMarked(executeParam.getScript(), dataframe);
+        return ResponseData.success(dataframe);
     }
 
     @ApiOperation(value = "Execute Script")
     @PostMapping(value = "/execute")
     public ResponseData<Dataframe> execute(@RequestBody ViewExecuteParam viewExecuteParam) throws Exception {
-        return ResponseData.success(dataProviderService.execute(viewExecuteParam));
+        Dataframe dataframe = dataProviderService.execute(viewExecuteParam);
+        GrainTemperatureDataframeExpander.expandIfMarked(resolveGrainExpandScript(dataframe, viewExecuteParam), dataframe);
+        return ResponseData.success(dataframe);
+    }
+
+    /**
+     * 视图执行后 {@link Dataframe#getScript()} 可能为 null（未开启 script 回显）；拆列需用库中视图脚本判断是否含粮温标记。
+     */
+    private String resolveGrainExpandScript(Dataframe dataframe, ViewExecuteParam viewExecuteParam) {
+        String s = dataframe != null ? dataframe.getScript() : null;
+        if (StringUtils.isNotBlank(s) && GrainTemperatureDataframeExpander.isExpandGrainTemperatureScript(s)) {
+            return s;
+        }
+        if (viewExecuteParam != null && StringUtils.isNotBlank(viewExecuteParam.getViewId())) {
+            View view = viewService.retrieve(viewExecuteParam.getViewId(), true);
+            return view != null ? view.getScript() : s;
+        }
+        return s;
     }
 
     @ApiOperation(value = "get all supported functions for this data source type")

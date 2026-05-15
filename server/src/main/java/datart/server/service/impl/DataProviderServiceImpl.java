@@ -48,6 +48,7 @@ import datart.server.service.DataProviderService;
 import datart.server.service.PgExecutePermissionService;
 import datart.server.service.VariableService;
 import datart.server.service.ViewService;
+import datart.server.util.GrainTemperatureDataframeExpander;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -257,7 +258,9 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
                 .serverAggregate((boolean) providerSource.getProperties().getOrDefault(SERVER_AGGREGATE, false))
                 .cacheEnable(false)
                 .build();
-        return dataProviderManager.execute(providerSource, queryScript, executeParam);
+        Dataframe dataframe = dataProviderManager.execute(providerSource, queryScript, executeParam);
+        expandGrainTemperatureColumns(dataframe, testExecuteParam.getScript());
+        return dataframe;
     }
 
     @Override
@@ -275,6 +278,7 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
 
         //datasource and view
         View view = retrieve(viewExecuteParam.getViewId(), View.class, checkViewPermission);
+        GrainTemperatureDataframeExpander.stripJavaOnlyDerivedFromViewExecute(viewExecuteParam, view.getScript());
         // 与 testExecute 一致：按外部 PG 的 org 授权校验脚本中的组织 ID 字面量（受 datart.permission.test-execute-org-check-enabled 等配置控制）
         TestExecuteParam orgCheckParam = new TestExecuteParam();
         orgCheckParam.setScript(view.getScript());
@@ -296,11 +300,15 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
 
         //permission and variables
         Set<SelectColumn> columns = parseColumnPermission(view);
+        GrainTemperatureDataframeExpander.stripJavaOnlyDerivedFromIncludeColumns(columns, view.getScript());
         List<ScriptVariable> variables = parseVariables(view, viewExecuteParam);
 
         if (securityManager.isOrgOwner(view.getOrgId())) {
             disablePermissionVariables(variables);
         }
+
+        Map<String, Column> viewSchema = parseSchema(view.getModel());
+        GrainTemperatureDataframeExpander.stripJavaOnlyDerivedFromSchema(viewSchema, view.getScript());
 
         QueryScript queryScript = QueryScript.builder()
                 .test(false)
@@ -308,7 +316,7 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
                 .script(view.getScript())
                 .scriptType(view.getType() == null ? ScriptType.SQL : ScriptType.valueOf(view.getType()))
                 .variables(variables)
-                .schema(parseSchema(view.getModel()))
+                .schema(viewSchema)
                 .build();
 
         if (viewExecuteParam.getPageInfo().getPageNo() < 1) {
@@ -334,6 +342,7 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
                 .build();
 
         Dataframe dataframe = dataProviderManager.execute(providerSource, queryScript, queryParam);
+        expandGrainTemperatureColumns(dataframe, view.getScript());
 
         if (!viewExecuteParam.isScript() || !scriptPermission) {
             dataframe.setScript(null);
@@ -376,6 +385,19 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
     @Override
     public void updateSource(Source source) {
         dataProviderManager.updateSource(parseDataProviderConfig(source));
+    }
+
+    /**
+     * 粮温视图：在 JDBC 结果 {@link Dataframe} 上按脚本标记解析 {@code algorithm_analysis_conclusion}。
+     * {@link #testExecute(TestExecuteParam)} 由 {@link datart.server.controller.DataProviderController} 在返回前拆列；
+     * 本方法用于 {@link #execute}、{@link #testExecuteWithoutSourcePermission} 等不经该 Controller 的入口。
+     */
+    private void expandGrainTemperatureColumns(Dataframe dataframe, String script) {
+        try {
+            GrainTemperatureDataframeExpander.expandIfMarked(script, dataframe);
+        } catch (Exception e) {
+            log.warn("grain temperature dataframe expand skipped: {}", e.toString());
+        }
     }
 
     private void disablePermissionVariables(List<ScriptVariable> variables) {
