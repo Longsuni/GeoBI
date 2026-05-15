@@ -278,6 +278,8 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
 
         //datasource and view
         View view = retrieve(viewExecuteParam.getViewId(), View.class, checkViewPermission);
+        List<SelectColumn> requestedColumnSnapshot = viewExecuteParam.getColumns() != null
+                ? new ArrayList<>(viewExecuteParam.getColumns()) : null;
         GrainTemperatureDataframeExpander.stripJavaOnlyDerivedFromViewExecute(viewExecuteParam, view.getScript());
         // 与 testExecute 一致：按外部 PG 的 org 授权校验脚本中的组织 ID 字面量（受 datart.permission.test-execute-org-check-enabled 等配置控制）
         TestExecuteParam orgCheckParam = new TestExecuteParam();
@@ -325,8 +327,11 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
 
         viewExecuteParam.getPageInfo().setPageSize(Math.min(viewExecuteParam.getPageInfo().getPageSize(), Integer.MAX_VALUE));
 
+        List<SelectColumn> sqlColumns = GrainTemperatureDataframeExpander.mergeGrainConclusionColumnForSql(
+                viewExecuteParam.getColumns(), view.getScript());
+
         ExecuteParam queryParam = ExecuteParam.builder()
-                .columns(viewExecuteParam.getColumns())
+                .columns(sqlColumns)
                 .keywords(viewExecuteParam.getKeywords())
                 .functionColumns(viewExecuteParam.getFunctionColumns())
                 .aggregators(viewExecuteParam.getAggregators())
@@ -343,6 +348,7 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
 
         Dataframe dataframe = dataProviderManager.execute(providerSource, queryScript, queryParam);
         expandGrainTemperatureColumns(dataframe, view.getScript());
+        GrainTemperatureDataframeExpander.trimDataframeToRequestedColumns(dataframe, requestedColumnSnapshot, view.getScript());
 
         if (!viewExecuteParam.isScript() || !scriptPermission) {
             dataframe.setScript(null);
@@ -395,6 +401,9 @@ public class DataProviderServiceImpl extends BaseService implements DataProvider
     private void expandGrainTemperatureColumns(Dataframe dataframe, String script) {
         try {
             GrainTemperatureDataframeExpander.expandIfMarked(script, dataframe);
+            if (GrainTemperatureDataframeExpander.isExpandGrainTemperatureScript(script)) {
+                GrainTemperatureDataframeExpander.removeAlgorithmConclusionJsonFromDataframe(dataframe);
+            }
         } catch (Exception e) {
             log.warn("grain temperature dataframe expand skipped: {}", e.toString());
         }

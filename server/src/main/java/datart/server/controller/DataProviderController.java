@@ -101,6 +101,9 @@ public class DataProviderController extends BaseController {
     public ResponseData<Dataframe> testExecute(@RequestBody TestExecuteParam executeParam) throws Exception {
         Dataframe dataframe = dataProviderService.testExecute(executeParam);
         GrainTemperatureDataframeExpander.expandIfMarked(executeParam.getScript(), dataframe);
+        if (GrainTemperatureDataframeExpander.isExpandGrainTemperatureScript(executeParam.getScript())) {
+            GrainTemperatureDataframeExpander.removeAlgorithmConclusionJsonFromDataframe(dataframe);
+        }
         return ResponseData.success(dataframe);
     }
 
@@ -108,7 +111,11 @@ public class DataProviderController extends BaseController {
     @PostMapping(value = "/execute")
     public ResponseData<Dataframe> execute(@RequestBody ViewExecuteParam viewExecuteParam) throws Exception {
         Dataframe dataframe = dataProviderService.execute(viewExecuteParam);
-        GrainTemperatureDataframeExpander.expandIfMarked(resolveGrainExpandScript(dataframe, viewExecuteParam), dataframe);
+        String grainScript = resolveGrainExpandScript(dataframe, viewExecuteParam);
+        GrainTemperatureDataframeExpander.expandIfMarked(grainScript, dataframe);
+        if (GrainTemperatureDataframeExpander.isExpandGrainTemperatureScript(grainScript)) {
+            GrainTemperatureDataframeExpander.removeAlgorithmConclusionJsonFromDataframe(dataframe);
+        }
         return ResponseData.success(dataframe);
     }
 

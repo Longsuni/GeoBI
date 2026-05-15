@@ -40,6 +40,9 @@ public final class GrainTemperatureDataframeExpander {
     /** 替换整包原文后的列名（与 SQL 别名、视图 model 一致） */
     public static final String ALGORITHMS_JSON_COLUMN = "algorithms_json";
 
+    /** 子查询中真实存在的列，供展开解析；若用户仅选 Java 衍生列，外层 SQL 仍须带上否则 JDBC 结果无法展开 */
+    private static final String ALGORITHM_ANALYSIS_CONCLUSION = "algorithm_analysis_conclusion";
+
     /**
      * 仅由 {@link #expandIfMarked(String, Dataframe)} 在内存中追加的列，不存在于 PG 子查询结果中；
      * 若进入 Calcite 外层包装（DATART_VTABLE），会导致「字段不存在」。
@@ -128,6 +131,88 @@ public final class GrainTemperatureDataframeExpander {
         list.removeIf(removeIf);
     }
 
+    /**
+     * 生成 SqlBuilder 用的列清单：已去掉仅 Java 列后，若为粮温脚本则自动补上 {@link #ALGORITHM_ANALYSIS_CONCLUSION}，
+     * 以便 JDBC 结果中仍含整包 JSON 供 {@link #expandIfMarked} 解析。
+     */
+    public static List<SelectColumn> mergeGrainConclusionColumnForSql(List<SelectColumn> columns, String viewScript) {
+        if (!isExpandGrainTemperatureScript(viewScript)) {
+            return columns;
+        }
+        List<SelectColumn> out = new ArrayList<>();
+        if (columns != null) {
+            for (SelectColumn c : columns) {
+                if (c == null || StringUtils.isBlank(c.getColumnKey())) {
+                    continue;
+                }
+                if (StringUtils.isBlank(c.getAlias())) {
+                    c.setAlias(c.getColumnKey());
+                }
+                out.add(c);
+            }
+        }
+        boolean hasConclusion = false;
+        for (SelectColumn c : out) {
+            if (c != null && ALGORITHM_ANALYSIS_CONCLUSION.equalsIgnoreCase(StringUtils.trimToEmpty(c.getColumnKey()))) {
+                hasConclusion = true;
+                break;
+            }
+        }
+        if (!hasConclusion) {
+            out.add(SelectColumn.of(ALGORITHM_ANALYSIS_CONCLUSION, ALGORITHM_ANALYSIS_CONCLUSION));
+        }
+        return out;
+    }
+
+    /**
+     * 按用户请求列（strip 衍生列之前的快照）裁剪展开后的 Dataframe，避免只查库列时丢掉用户要的衍生指标列。
+     */
+    public static void trimDataframeToRequestedColumns(Dataframe df, List<SelectColumn> requestedSnapshot, String viewScript) {
+        if (df == null || !isExpandGrainTemperatureScript(viewScript) || CollectionUtils.isEmpty(requestedSnapshot)) {
+            return;
+        }
+        List<Column> cols = df.getColumns();
+        if (CollectionUtils.isEmpty(cols) || df.getRows() == null) {
+            return;
+        }
+        List<Integer> indices = new ArrayList<>();
+        List<Column> newCols = new ArrayList<>();
+        for (SelectColumn sc : requestedSnapshot) {
+            if (sc == null) {
+                continue;
+            }
+            String name = requestColumnOutputName(sc);
+            if (StringUtils.isBlank(name)) {
+                continue;
+            }
+            int ix = columnIndex(cols, name);
+            if (ix >= 0) {
+                indices.add(ix);
+                newCols.add(cols.get(ix));
+            }
+        }
+        if (newCols.isEmpty()) {
+            return;
+        }
+        List<List<Object>> newRows = new ArrayList<>(df.getRows().size());
+        for (List<Object> row : df.getRows()) {
+            List<Object> nr = new ArrayList<>(indices.size());
+            for (int ix : indices) {
+                nr.add(row != null && ix < row.size() ? row.get(ix) : null);
+            }
+            newRows.add(nr);
+        }
+        df.setColumns(newCols);
+        df.setRows(newRows);
+    }
+
+    private static String requestColumnOutputName(SelectColumn sc) {
+        if (StringUtils.isNotBlank(sc.getAlias())) {
+            return sc.getAlias().trim();
+        }
+        return StringUtils.trimToNull(sc.getColumnKey());
+    }
+
     public static void expandIfMarked(String script, Dataframe df) {
         if (df == null || StringUtils.isBlank(script) || !isExpandGrainTemperatureScript(script)) {
             return;
@@ -142,19 +227,17 @@ public final class GrainTemperatureDataframeExpander {
         }
         int algoIdx = columnIndex(columns, ALGORITHMS_JSON_COLUMN);
         if (algoIdx < 0) {
-            algoIdx = columnIndex(columns, "algorithm_analysis_conclusion");
+            algoIdx = columnIndex(columns, ALGORITHM_ANALYSIS_CONCLUSION);
         }
         if (algoIdx < 0) {
             return;
         }
-        List<Column> newCols = new ArrayList<>(columns.size() + 7);
+        List<Column> newCols = new ArrayList<>(columns.size() + 6);
         for (int i = 0; i < columns.size(); i++) {
-            Column c = columns.get(i);
             if (i == algoIdx) {
-                newCols.add(Column.of(ValueType.STRING, ALGORITHMS_JSON_COLUMN));
-            } else {
-                newCols.add(c);
+                continue;
             }
+            newCols.add(columns.get(i));
         }
         newCols.add(Column.of(ValueType.NUMERIC, "avg_temp_hotspot_exception_count"));
         newCols.add(Column.of(ValueType.NUMERIC, "isolation_forest_exception_count"));
@@ -166,14 +249,12 @@ public final class GrainTemperatureDataframeExpander {
 
         List<List<Object>> newRows = new ArrayList<>(df.getRows().size());
         for (List<Object> row : df.getRows()) {
-            List<Object> nr = new ArrayList<>(row.size() + 7);
+            List<Object> nr = new ArrayList<>(row.size() + 6);
             for (int i = 0; i < row.size(); i++) {
                 if (i == algoIdx) {
-                    String raw = row.get(i) != null ? row.get(i).toString() : null;
-                    nr.add(GrainAlgorithmAnalysisConclusionParser.parseAlgorithmsSummaryJson(raw));
-                } else {
-                    nr.add(i < row.size() ? row.get(i) : null);
+                    continue;
                 }
+                nr.add(i < row.size() ? row.get(i) : null);
             }
             String raw = algoIdx < row.size() && row.get(algoIdx) != null ? row.get(algoIdx).toString() : null;
             GrainAlgorithmDerivedFields f = GrainAlgorithmAnalysisConclusionParser.parse(raw);
@@ -188,6 +269,30 @@ public final class GrainTemperatureDataframeExpander {
         }
         df.setColumns(newCols);
         df.setRows(newRows);
+    }
+
+    /**
+     * 从结果集中移除整包/摘要结论列（仅保留拆列后的指标）。用于粮温脚本在 {@link #expandIfMarked} 未改写（如缺列）时仍去掉长 JSON。
+     */
+    public static void removeAlgorithmConclusionJsonFromDataframe(Dataframe df) {
+        if (df == null || CollectionUtils.isEmpty(df.getColumns()) || df.getRows() == null) {
+            return;
+        }
+        int idx = columnIndex(df.getColumns(), ALGORITHM_ANALYSIS_CONCLUSION);
+        if (idx < 0) {
+            idx = columnIndex(df.getColumns(), ALGORITHMS_JSON_COLUMN);
+        }
+        if (idx < 0) {
+            return;
+        }
+        List<Column> cols = new ArrayList<>(df.getColumns());
+        cols.remove(idx);
+        df.setColumns(cols);
+        for (List<Object> row : df.getRows()) {
+            if (row != null && idx < row.size()) {
+                row.remove(idx);
+            }
+        }
     }
 
     private static int columnIndex(List<Column> columns, String name) {
